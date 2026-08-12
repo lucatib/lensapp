@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:LensApp.Controls"
+             xmlns:models="clr-namespace:LensApp.Models"
+             xmlns:vm="clr-namespace:LensApp.ViewModels"
+             x:Class="LensApp.MainPage"
+             x:DataType="vm:MainViewModel"
+             Title="LensApp"
+             BackgroundColor="{StaticResource Background}">
+
+    <Grid RowDefinitions="*,Auto">
+
+        <!-- ============================ live camera ============================ -->
+        <Grid Grid.Row="0">
+
+            <controls:CameraPreview x:Name="Camera"
+                                    Zoom="{Binding Zoom}"
+                                    IsTorchOn="{Binding IsTorchOn}"
+                                    SampleSize="0.07"
+                                    SampleRate="8"
+                                    ColorSampled="OnColorSampled"
+                                    CameraError="OnCameraError" />
+
+            <!-- overlay: reticle, chips and the zoom control -->
+            <Grid BackgroundColor="Transparent">
+                <Grid.GestureRecognizers>
+                    <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />
+                    <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="OnDoubleTapped" />
+                </Grid.GestureRecognizers>
+
+                <!-- reticle: what gets measured -->
+                <Grid x:Name="Reticle"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center"
+                      WidthRequest="64"
+                      HeightRequest="64"
+                      InputTransparent="True">
+                    <Border Stroke="#000000" StrokeThickness="4" BackgroundColor="Transparent"
+                            StrokeShape="RoundRectangle 10" Opacity="0.55" />
+                    <Border Stroke="#FFFFFF" StrokeThickness="2" BackgroundColor="Transparent"
+                            StrokeShape="RoundRectangle 10" />
+                </Grid>
+
+                <!-- top chips -->
+                <HorizontalStackLayout VerticalOptions="Start" HorizontalOptions="Center"
+                                       Margin="12" Spacing="8">
+                    <Button Style="{StaticResource OverlayButton}"
+                            Text="{Binding TorchLabel}"
+                            Command="{Binding ToggleTorchCommand}" />
+                    <Button Style="{StaticResource OverlayButton}"
+                            Text="{Binding FreezeLabel}"
+                            Command="{Binding ToggleFreezeCommand}" />
+                    <Border BackgroundColor="{StaticResource Scrim}" Stroke="Transparent"
+                            StrokeShape="RoundRectangle 20" Padding="12,8"
+                            VerticalOptions="Center">
+                        <Label Text="{Binding ZoomText}" FontAttributes="Bold" />
+                    </Border>
+                </HorizontalStackLayout>
+
+                <!-- zoom -->
+                <Border VerticalOptions="End" Margin="12"
+                        BackgroundColor="{StaticResource Scrim}" Stroke="Transparent"
+                        StrokeShape="RoundRectangle 22" Padding="8,4"
+                        IsVisible="{Binding CanZoom}">
+                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4">
+                        <Button Grid.Column="0" Text="−" FontSize="18" Padding="12,4"
+                                BackgroundColor="Transparent"
+                                Command="{Binding ZoomOutCommand}" />
+                        <Slider Grid.Column="1"
+                                Value="{Binding ZoomFraction, Mode=TwoWay}"
+                                VerticalOptions="Center" />
+                        <Button Grid.Column="2" Text="+" FontSize="18" Padding="12,4"
+                                BackgroundColor="Transparent"
+                                Command="{Binding ZoomInCommand}" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ============================ measurement ============================ -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="10,6,10,10">
+            <VerticalStackLayout Spacing="12">
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+
+                    <!-- measured colour -->
+                    <Border Grid.Column="0" WidthRequest="92" HeightRequest="92"
+                            BackgroundColor="{Binding MeasuredColor}"
+                            Stroke="{StaticResource Outline}" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 12" Padding="0">
+                        <Label Text="{Binding HexText}"
+                               TextColor="{Binding MeasuredForeground}"
+                               FontSize="13" FontAttributes="Bold"
+                               HorizontalOptions="Center" VerticalOptions="End"
+                               Margin="0,0,0,8" />
+                    </Border>
+
+                    <!-- best RAL match -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                        <Label Text="{Binding BestMatch.Code, FallbackValue='—'}"
+                               FontSize="24" FontAttributes="Bold" />
+                        <Label Text="{Binding BestMatch.Name, FallbackValue='point the reticle at a surface'}"
+                               FontSize="15" TextColor="{StaticResource Accent}" />
+                        <Label FontSize="12" TextColor="{StaticResource TextSecondary}">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="{Binding BestMatch.DeltaEText, FallbackValue=''}" />
+                                    <Span Text="  ·  " />
+                                    <Span Text="{Binding BestMatch.Quality, FallbackValue=''}" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Label Text="{Binding RgbText}" Style="{StaticResource Caption}" />
+                        <Label Text="{Binding LabText}" Style="{StaticResource Caption}" />
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- runners-up -->
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                    <HorizontalStackLayout Spacing="8"
+                                           BindableLayout.ItemsSource="{Binding Alternatives}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:RalMatch">
+                                <Border BackgroundColor="{StaticResource SurfaceRaised}"
+                                        Stroke="{StaticResource Outline}" StrokeThickness="1"
+                                        StrokeShape="RoundRectangle 10" Padding="8,6">
+                                    <HorizontalStackLayout Spacing="8">
+                                        <Border WidthRequest="26" HeightRequest="26"
+                                                BackgroundColor="{Binding Swatch}"
+                                                Stroke="Transparent"
+                                                StrokeShape="RoundRectangle 6" />
+                                        <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                                            <Label Text="{Binding Code}" FontSize="12" FontAttributes="Bold" />
+                                            <Label Text="{Binding DeltaEText}" FontSize="10"
+                                                   TextColor="{StaticResource TextSecondary}" />
+                                        </VerticalStackLayout>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                </ScrollView>
+
+                <!-- actions -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                    <Button Grid.Column="0" Text="Calibrate" Command="{Binding CalibrateCommand}" />
+                    <Button Grid.Column="1" Text="Reset WB"
+                            Command="{Binding ResetCalibrationCommand}"
+                            IsEnabled="{Binding IsCalibrated}" />
+                    <Button Grid.Column="2" Text="Copy" Command="{Binding CopyCommand}" />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                    <Border Grid.Column="0" BackgroundColor="{StaticResource AccentMuted}"
+                            Stroke="Transparent" StrokeShape="RoundRectangle 8"
+                            Padding="8,3" VerticalOptions="Start">
+                        <Label Text="{Binding CalibrationLabel}" FontSize="11"
+                               TextColor="{StaticResource Accent}" />
+                    </Border>
+                    <Label Grid.Column="1" Text="{Binding Status}"
+                           Style="{StaticResource Caption}" VerticalOptions="Center" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

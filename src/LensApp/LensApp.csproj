@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0-android;net9.0-ios</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>LensApp</RootNamespace>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <ApplicationTitle>LensApp</ApplicationTitle>
+    <ApplicationId>com.lucatib.lensapp</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>1</ApplicationVersion>
+
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- App icon / splash -->
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0E1116" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0E1116" BaseSize="128,128" />
+
+    <MauiXaml Include="**\*.xaml" Exclude="bin\**;obj\**" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <!-- CameraX. Floating versions so the newest 1.4.x binding available is used. -->
+    <PackageReference Include="Xamarin.AndroidX.Camera.Core" Version="1.4.*" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Camera2" Version="1.4.*" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Lifecycle" Version="1.4.*" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.View" Version="1.4.*" />
+  </ItemGroup>
+
+</Project>
