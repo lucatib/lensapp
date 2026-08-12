@@ -74,8 +74,7 @@ dotnet build src/LensApp/LensApp.csproj -f net10.0-ios -t:Run -p:RuntimeIdentifi
 Both targets need a **physical device** — neither simulator gives you a usable camera, and
 the iOS simulator has no camera at all.
 
-The CameraX packages are referenced with a floating `1.4.*` version so the newest available
-binding is restored; pin them if you need reproducible restores.
+The CameraX packages are pinned to `1.6.1.1` for reproducible restores.
 
 ## Accuracy — read this before trusting a number
 

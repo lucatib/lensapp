@@ -83,7 +83,7 @@ public partial class CameraPreviewHandler
         provider.UnbindAll();
 
         _preview = new Preview.Builder().Build();
-        _preview.SetSurfaceProvider(PlatformView.SurfaceProvider);
+        _preview.SetSurfaceProvider(ContextCompat.GetMainExecutor(Context), PlatformView.SurfaceProvider);
 
         _camera = provider.BindToLifecycle(lifecycleOwner, CameraSelector.DefaultBackCamera, _preview);
 

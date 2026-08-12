@@ -23,16 +23,22 @@
     <!-- App icon / splash -->
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0E1116" />
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0E1116" BaseSize="128,128" />
-
-    <MauiXaml Include="**\*.xaml" Exclude="bin\**;obj\**" />
   </ItemGroup>
 
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <!-- CameraX. Floating versions so the newest 1.4.x binding available is used. -->
-    <PackageReference Include="Xamarin.AndroidX.Camera.Core" Version="1.4.*" />
-    <PackageReference Include="Xamarin.AndroidX.Camera.Camera2" Version="1.4.*" />
-    <PackageReference Include="Xamarin.AndroidX.Camera.Lifecycle" Version="1.4.*" />
-    <PackageReference Include="Xamarin.AndroidX.Camera.View" Version="1.4.*" />
+    <!-- CameraX, pinned for reproducible restores. -->
+    <PackageReference Include="Xamarin.AndroidX.Camera.Core" Version="1.6.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Camera2" Version="1.6.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.Lifecycle" Version="1.6.1.1" />
+    <PackageReference Include="Xamarin.AndroidX.Camera.View" Version="1.6.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Microsoft.Maui.Controls" Version="10.0.90" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
   </ItemGroup>
 
 </Project>
