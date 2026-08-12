@@ -31,6 +31,21 @@
     <PackageReference Include="Xamarin.AndroidX.Camera.Camera2" Version="1.6.1.1" />
     <PackageReference Include="Xamarin.AndroidX.Camera.Lifecycle" Version="1.6.1.1" />
     <PackageReference Include="Xamarin.AndroidX.Camera.View" Version="1.6.1.1" />
+
+    <!--
+      Maui.Controls transitively references AndroidX.Navigation 2.9.2.1, whose Ktx bindings
+      (Fragment.Ktx, Activity.Ktx, etc.) declare narrow version ranges tied to the AndroidX base
+      packages of that same release. CameraX.View needs newer base packages (Fragment 1.8.9.3+,
+      Core 1.19.0.1+, ...), which pushes the resolved versions outside those ranges and NuGet
+      raises NU1608. Bumping Navigation.Fragment/.Runtime.Android to the latest release realigns
+      their Ktx bindings with the versions CameraX already pulls in, closing most of the gap.
+      Navigation.UI is left at 2.9.2.1 on purpose: bumping it drags in a newer Material Components
+      binding whose Slider listener interfaces changed shape and breaks the generated Java glue
+      (BaseOnChangeListenerImplementor/BaseOnSliderTouchListenerImplementor). That leaves two
+      harmless NU1608s (Navigation.UI -> Navigation.Common/.Runtime) unresolved.
+    -->
+    <PackageReference Include="Xamarin.AndroidX.Navigation.Fragment" Version="2.9.8.1" />
+    <PackageReference Include="Xamarin.AndroidX.Navigation.Runtime.Android" Version="2.9.8.1" />
   </ItemGroup>
 
   <ItemGroup>

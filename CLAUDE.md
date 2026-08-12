@@ -41,3 +41,8 @@ Both targets need a physical device — the camera is the whole app, and the iOS
 - `builder.Logging.AddDebug()` in `MauiProgram.cs` needs the `Microsoft.Extensions.Logging.Debug`
   package explicitly referenced (Debug-only) — it is not pulled in transitively by
   `Microsoft.Maui.Controls`.
+- `AndroidX.Navigation.Fragment`/`.Runtime.Android` are pinned to `2.9.8.1` to realign their Ktx
+  sub-dependencies with the newer AndroidX base packages CameraX 1.6.1.1 needs; without it, restore
+  emits a pile of `NU1608` warnings. Do **not** also bump `Navigation.UI` to close the last two —
+  it drags in a newer Material Components binding that breaks the generated Slider glue
+  (`BaseOnChangeListenerImplementor`/`BaseOnSliderTouchListenerImplementor`).
