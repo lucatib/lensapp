@@ -28,8 +28,6 @@ public sealed class MainViewModel : ObservableObject
         ToggleFreezeCommand = new Command(() => IsFrozen = !IsFrozen);
         CalibrateCommand = new Command(Calibrate, () => _hasSample);
         ResetCalibrationCommand = new Command(ResetCalibration);
-        ZoomInCommand = new Command(() => Zoom = Math.Min(MaxZoom, Zoom * 1.5));
-        ZoomOutCommand = new Command(() => Zoom = Math.Max(1.0, Zoom / 1.5));
         CopyCommand = new Command(async () => await CopyAsync());
 
         IsCalibrated = _whiteBalance.IsCalibrated;
@@ -200,8 +198,6 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ToggleFreezeCommand { get; }
     public ICommand CalibrateCommand { get; }
     public ICommand ResetCalibrationCommand { get; }
-    public ICommand ZoomInCommand { get; }
-    public ICommand ZoomOutCommand { get; }
     public ICommand CopyCommand { get; }
 
     // ---- sample pipeline -------------------------------------------------------------------

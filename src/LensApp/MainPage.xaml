@@ -59,21 +59,13 @@
                 </HorizontalStackLayout>
 
                 <!-- zoom -->
-                <Border VerticalOptions="End" Margin="12"
+                <Border x:Name="ZoomBar" VerticalOptions="End" Margin="12"
                         BackgroundColor="{StaticResource Scrim}" Stroke="Transparent"
-                        StrokeShape="RoundRectangle 22" Padding="8,4"
+                        StrokeShape="RoundRectangle 22" Padding="16,4"
                         IsVisible="{Binding CanZoom}">
-                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="4">
-                        <Button Grid.Column="0" Text="−" FontSize="18" Padding="12,4"
-                                BackgroundColor="Transparent"
-                                Command="{Binding ZoomOutCommand}" />
-                        <Slider Grid.Column="1"
-                                Value="{Binding ZoomFraction, Mode=TwoWay}"
-                                VerticalOptions="Center" />
-                        <Button Grid.Column="2" Text="+" FontSize="18" Padding="12,4"
-                                BackgroundColor="Transparent"
-                                Command="{Binding ZoomInCommand}" />
-                    </Grid>
+                    <Slider WidthRequest="200"
+                            Value="{Binding ZoomFraction, Mode=TwoWay}"
+                            VerticalOptions="Center" />
                 </Border>
             </Grid>
         </Grid>
