@@ -59,14 +59,16 @@
                     </Border>
                 </HorizontalStackLayout>
 
-                <!-- zoom -->
-                <Border x:Name="ZoomBar" VerticalOptions="End" Margin="12"
+                <!-- zoom: vertical slider, right edge -->
+                <Border x:Name="ZoomBar" HorizontalOptions="End" VerticalOptions="Center" Margin="0,0,10,0"
+                        WidthRequest="48" HeightRequest="240"
                         BackgroundColor="{StaticResource Scrim}" Stroke="Transparent"
-                        StrokeShape="RoundRectangle 22" Padding="16,4"
+                        StrokeShape="RoundRectangle 24" Padding="0"
                         IsVisible="{Binding CanZoom}">
-                    <Slider WidthRequest="200"
+                    <Slider WidthRequest="240" HeightRequest="40"
+                            Rotation="270"
                             Value="{Binding ZoomFraction, Mode=TwoWay}"
-                            VerticalOptions="Center" />
+                            HorizontalOptions="Center" VerticalOptions="Center" />
                 </Border>
             </Grid>
         </Grid>
