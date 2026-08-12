@@ -9,10 +9,10 @@
              Title="LensApp"
              BackgroundColor="{StaticResource Background}">
 
-    <Grid RowDefinitions="*,Auto">
+    <Grid>
 
-        <!-- ============================ live camera ============================ -->
-        <Grid Grid.Row="0">
+        <!-- ============================ live camera (full screen) ============================ -->
+        <Grid>
 
             <controls:CameraPreview x:Name="Camera"
                                     Zoom="{Binding Zoom}"
@@ -71,90 +71,101 @@
             </Grid>
         </Grid>
 
-        <!-- ============================ measurement ============================ -->
-        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="10,6,10,10">
-            <VerticalStackLayout Spacing="12">
+        <!-- ============================ RAL panel (draggable bottom sheet) ============================ -->
+        <VerticalStackLayout x:Name="PanelContainer" VerticalOptions="End" Spacing="0">
 
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+            <!-- drag handle -->
+            <Grid x:Name="PanelHandle" HeightRequest="28" BackgroundColor="{StaticResource Scrim}">
+                <Border WidthRequest="40" HeightRequest="5" HorizontalOptions="Center" VerticalOptions="Center"
+                        BackgroundColor="{StaticResource Outline}" Stroke="Transparent"
+                        StrokeShape="RoundRectangle 3" />
+            </Grid>
 
-                    <!-- measured colour -->
-                    <Border Grid.Column="0" WidthRequest="92" HeightRequest="92"
-                            BackgroundColor="{Binding MeasuredColor}"
-                            Stroke="{StaticResource Outline}" StrokeThickness="1"
-                            StrokeShape="RoundRectangle 12" Padding="0">
-                        <Label Text="{Binding HexText}"
-                               TextColor="{Binding MeasuredForeground}"
-                               FontSize="13" FontAttributes="Bold"
-                               HorizontalOptions="Center" VerticalOptions="End"
-                               Margin="0,0,0,8" />
-                    </Border>
+            <!-- ============================ measurement ============================ -->
+            <Border x:Name="PanelCard" Style="{StaticResource Card}" Margin="10,0,10,10">
+                <VerticalStackLayout Spacing="12">
 
-                    <!-- best RAL match -->
-                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                        <Label Text="{Binding BestMatch.Code, FallbackValue='—'}"
-                               FontSize="24" FontAttributes="Bold" />
-                        <Label Text="{Binding BestMatch.Name, FallbackValue='point the reticle at a surface'}"
-                               FontSize="15" TextColor="{StaticResource Accent}" />
-                        <Label FontSize="12" TextColor="{StaticResource TextSecondary}">
-                            <Label.FormattedText>
-                                <FormattedString>
-                                    <Span Text="{Binding BestMatch.DeltaEText, FallbackValue=''}" />
-                                    <Span Text="  ·  " />
-                                    <Span Text="{Binding BestMatch.Quality, FallbackValue=''}" />
-                                </FormattedString>
-                            </Label.FormattedText>
-                        </Label>
-                        <Label Text="{Binding RgbText}" Style="{StaticResource Caption}" />
-                        <Label Text="{Binding LabText}" Style="{StaticResource Caption}" />
-                    </VerticalStackLayout>
-                </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
 
-                <!-- runners-up -->
-                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
-                    <HorizontalStackLayout Spacing="8"
-                                           BindableLayout.ItemsSource="{Binding Alternatives}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="models:RalMatch">
-                                <Border BackgroundColor="{StaticResource SurfaceRaised}"
-                                        Stroke="{StaticResource Outline}" StrokeThickness="1"
-                                        StrokeShape="RoundRectangle 10" Padding="8,6">
-                                    <HorizontalStackLayout Spacing="8">
-                                        <Border WidthRequest="26" HeightRequest="26"
-                                                BackgroundColor="{Binding Swatch}"
-                                                Stroke="Transparent"
-                                                StrokeShape="RoundRectangle 6" />
-                                        <VerticalStackLayout Spacing="0" VerticalOptions="Center">
-                                            <Label Text="{Binding Code}" FontSize="12" FontAttributes="Bold" />
-                                            <Label Text="{Binding DeltaEText}" FontSize="10"
-                                                   TextColor="{StaticResource TextSecondary}" />
-                                        </VerticalStackLayout>
-                                    </HorizontalStackLayout>
-                                </Border>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </HorizontalStackLayout>
-                </ScrollView>
+                        <!-- measured colour -->
+                        <Border Grid.Column="0" WidthRequest="92" HeightRequest="92"
+                                BackgroundColor="{Binding MeasuredColor}"
+                                Stroke="{StaticResource Outline}" StrokeThickness="1"
+                                StrokeShape="RoundRectangle 12" Padding="0">
+                            <Label Text="{Binding HexText}"
+                                   TextColor="{Binding MeasuredForeground}"
+                                   FontSize="13" FontAttributes="Bold"
+                                   HorizontalOptions="Center" VerticalOptions="End"
+                                   Margin="0,0,0,8" />
+                        </Border>
 
-                <!-- actions -->
-                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                    <Button Grid.Column="0" Text="Calibrate" Command="{Binding CalibrateCommand}" />
-                    <Button Grid.Column="1" Text="Reset WB"
-                            Command="{Binding ResetCalibrationCommand}"
-                            IsEnabled="{Binding IsCalibrated}" />
-                    <Button Grid.Column="2" Text="Copy" Command="{Binding CopyCommand}" />
-                </Grid>
+                        <!-- best RAL match -->
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                            <Label Text="{Binding BestMatch.Code, FallbackValue='—'}"
+                                   FontSize="24" FontAttributes="Bold" />
+                            <Label Text="{Binding BestMatch.Name, FallbackValue='point the reticle at a surface'}"
+                                   FontSize="15" TextColor="{StaticResource Accent}" />
+                            <Label FontSize="12" TextColor="{StaticResource TextSecondary}">
+                                <Label.FormattedText>
+                                    <FormattedString>
+                                        <Span Text="{Binding BestMatch.DeltaEText, FallbackValue=''}" />
+                                        <Span Text="  ·  " />
+                                        <Span Text="{Binding BestMatch.Quality, FallbackValue=''}" />
+                                    </FormattedString>
+                                </Label.FormattedText>
+                            </Label>
+                            <Label Text="{Binding RgbText}" Style="{StaticResource Caption}" />
+                            <Label Text="{Binding LabText}" Style="{StaticResource Caption}" />
+                        </VerticalStackLayout>
+                    </Grid>
 
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                    <Border Grid.Column="0" BackgroundColor="{StaticResource AccentMuted}"
-                            Stroke="Transparent" StrokeShape="RoundRectangle 8"
-                            Padding="8,3" VerticalOptions="Start">
-                        <Label Text="{Binding CalibrationLabel}" FontSize="11"
-                               TextColor="{StaticResource Accent}" />
-                    </Border>
-                    <Label Grid.Column="1" Text="{Binding Status}"
-                           Style="{StaticResource Caption}" VerticalOptions="Center" />
-                </Grid>
-            </VerticalStackLayout>
-        </Border>
+                    <!-- runners-up -->
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="8"
+                                               BindableLayout.ItemsSource="{Binding Alternatives}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="models:RalMatch">
+                                    <Border BackgroundColor="{StaticResource SurfaceRaised}"
+                                            Stroke="{StaticResource Outline}" StrokeThickness="1"
+                                            StrokeShape="RoundRectangle 10" Padding="8,6">
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Border WidthRequest="26" HeightRequest="26"
+                                                    BackgroundColor="{Binding Swatch}"
+                                                    Stroke="Transparent"
+                                                    StrokeShape="RoundRectangle 6" />
+                                            <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                                                <Label Text="{Binding Code}" FontSize="12" FontAttributes="Bold" />
+                                                <Label Text="{Binding DeltaEText}" FontSize="10"
+                                                       TextColor="{StaticResource TextSecondary}" />
+                                            </VerticalStackLayout>
+                                        </HorizontalStackLayout>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+
+                    <!-- actions -->
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                        <Button Grid.Column="0" Text="Calibrate" Command="{Binding CalibrateCommand}" />
+                        <Button Grid.Column="1" Text="Reset WB"
+                                Command="{Binding ResetCalibrationCommand}"
+                                IsEnabled="{Binding IsCalibrated}" />
+                        <Button Grid.Column="2" Text="Copy" Command="{Binding CopyCommand}" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                        <Border Grid.Column="0" BackgroundColor="{StaticResource AccentMuted}"
+                                Stroke="Transparent" StrokeShape="RoundRectangle 8"
+                                Padding="8,3" VerticalOptions="Start">
+                            <Label Text="{Binding CalibrationLabel}" FontSize="11"
+                                   TextColor="{StaticResource Accent}" />
+                        </Border>
+                        <Label Grid.Column="1" Text="{Binding Status}"
+                               Style="{StaticResource Caption}" VerticalOptions="Center" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>
