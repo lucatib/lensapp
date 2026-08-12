@@ -6,12 +6,17 @@ The torch can be switched on to light the sample.
 
 ```
 ┌──────────────────────────────┐
-│  Torch off  │ Hold │  2.4×   │   live preview, pinch or slide to zoom
+│  Torch off  │ Hold │  2.4×   │   full-screen live preview
 │                              │
-│            ┌──┐              │   the reticle marks the pixels being measured
-│            └──┘              │
-│      [ − ]══════[ + ]        │
-├──────────────────────────────┤
+│                             ║│   drag anywhere to zoom - pinch, double-tap
+│            ┌──┐             ║│   and the vertical slider on the right all
+│            └──┘             ║│   work too
+│                              │
+│              ▔▔▔▔            │   ← drag up, or tap, to reveal the RAL panel
+└──────────────────────────────┘
+        (dragged open)
+┌──────────────────────────────┐
+│              ▔▔▔▔            │   ← drag down, or tap, to hide it again
 │ ███  │ RAL 5015              │   best match, updated ~8×/second
 │ #2A73│ Sky blue              │
 │ B0   │ ΔE 1.4 · excellent    │
@@ -27,7 +32,7 @@ The torch can be switched on to light the sample.
 | Feature | How |
 | --- | --- |
 | Live preview | CameraX `Preview` (Android) / `AVCaptureVideoPreviewLayer` (iOS) |
-| Zoom | Real camera zoom (`CameraControl.SetZoomRatio` / `AVCaptureDevice.VideoZoomFactor`), driven by pinch, a slider, ± buttons, or a double tap |
+| Zoom | Real camera zoom (`CameraControl.SetZoomRatio` / `AVCaptureDevice.VideoZoomFactor`), driven by pinch, drag, the vertical slider, or a double tap |
 | Torch | `CameraControl.EnableTorch` / `AVCaptureDevice.TorchMode`, auto-released when the page goes away |
 | Colour measurement | A centre patch (7 % of the short side) is averaged in linear light, with outlier pixels rejected |
 | RAL match | Patch → CIE Lab → **CIEDE2000** against the RAL Classic table; best match plus three runners-up with their ΔE |
