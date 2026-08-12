@@ -98,4 +98,48 @@ public partial class MainPage : ContentPage
                 break;
         }
     }
+
+    bool _panelOpen;
+    bool _panelPositioned;
+    double _panelClosedOffset;
+    double _panelDragStartTranslationY;
+
+    void OnPanelCardSizeChanged(object? sender, EventArgs e)
+    {
+        if (PanelCard.Height <= 0) return;
+
+        _panelClosedOffset = PanelCard.Height;
+        if (!_panelOpen) PanelContainer.TranslationY = _panelClosedOffset;
+
+        if (_panelPositioned) return;
+        _panelPositioned = true;
+        PanelContainer.Opacity = 1;
+    }
+
+    void OnPanelHandlePanUpdated(object? sender, PanUpdatedEventArgs e)
+    {
+        switch (e.StatusType)
+        {
+            case GestureStatus.Started:
+                _panelDragStartTranslationY = PanelContainer.TranslationY;
+                break;
+            case GestureStatus.Running:
+                PanelContainer.TranslationY = Math.Clamp(
+                    _panelDragStartTranslationY + e.TotalY, 0, _panelClosedOffset);
+                break;
+            case GestureStatus.Completed:
+                SetPanelOpen(PanelContainer.TranslationY < _panelClosedOffset / 2);
+                break;
+        }
+    }
+
+    void OnPanelHandleTapped(object? sender, TappedEventArgs e) => SetPanelOpen(!_panelOpen);
+
+    void SetPanelOpen(bool open)
+    {
+        _panelOpen = open;
+        ZoomBar.FadeTo(open ? 0 : 1, 150);
+        ZoomBar.InputTransparent = open;
+        PanelContainer.TranslateTo(0, open ? 0 : _panelClosedOffset, 200, Easing.CubicOut);
+    }
 }

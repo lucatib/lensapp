@@ -72,17 +72,22 @@
         </Grid>
 
         <!-- ============================ RAL panel (draggable bottom sheet) ============================ -->
-        <VerticalStackLayout x:Name="PanelContainer" VerticalOptions="End" Spacing="0">
+        <VerticalStackLayout x:Name="PanelContainer" VerticalOptions="End" Spacing="0" Opacity="0">
 
             <!-- drag handle -->
             <Grid x:Name="PanelHandle" HeightRequest="28" BackgroundColor="{StaticResource Scrim}">
+                <Grid.GestureRecognizers>
+                    <PanGestureRecognizer PanUpdated="OnPanelHandlePanUpdated" />
+                    <TapGestureRecognizer Tapped="OnPanelHandleTapped" />
+                </Grid.GestureRecognizers>
                 <Border WidthRequest="40" HeightRequest="5" HorizontalOptions="Center" VerticalOptions="Center"
                         BackgroundColor="{StaticResource Outline}" Stroke="Transparent"
                         StrokeShape="RoundRectangle 3" />
             </Grid>
 
             <!-- ============================ measurement ============================ -->
-            <Border x:Name="PanelCard" Style="{StaticResource Card}" Margin="10,0,10,10">
+            <Border x:Name="PanelCard" Style="{StaticResource Card}" Margin="10,0,10,10"
+                    SizeChanged="OnPanelCardSizeChanged">
                 <VerticalStackLayout Spacing="12">
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
