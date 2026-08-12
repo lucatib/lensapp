@@ -1,0 +1,26 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+## Mobile
+*.apk
+*.aab
+*.ipa
+*.app/
+*.dSYM/
+*.mobileprovision
+*.p12
+
+## OS
+.DS_Store
+Thumbs.db

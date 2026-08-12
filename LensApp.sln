@@ -1,0 +1,23 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35222.181
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-0301-11D3-9C09-00C04F79EFBC}") = "LensApp", "src\LensApp\LensApp.csproj", "{AFA6396A-55D9-45E4-BFFA-D9E48E01A03F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AFA6396A-55D9-45E4-BFFA-D9E48E01A03F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFA6396A-55D9-45E4-BFFA-D9E48E01A03F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFA6396A-55D9-45E4-BFFA-D9E48E01A03F}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{AFA6396A-55D9-45E4-BFFA-D9E48E01A03F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFA6396A-55D9-45E4-BFFA-D9E48E01A03F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFA6396A-55D9-45E4-BFFA-D9E48E01A03F}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
