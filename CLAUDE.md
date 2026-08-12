@@ -10,14 +10,14 @@ this file is the standing instruction that overrides it.
 
 ## Build and run
 
-.NET 9 SDK plus the MAUI workload (`dotnet workload install maui`).
+.NET 10 SDK (LTS) plus the MAUI workload (`dotnet workload install maui`).
 
 ```bash
 # Android, from any OS
-dotnet build src/LensApp/LensApp.csproj -f net9.0-android -t:Run
+dotnet build src/LensApp/LensApp.csproj -f net10.0-android -t:Run
 
 # iOS, macOS with Xcode only
-dotnet build src/LensApp/LensApp.csproj -f net9.0-ios -t:Run -p:RuntimeIdentifier=ios-arm64
+dotnet build src/LensApp/LensApp.csproj -f net10.0-ios -t:Run -p:RuntimeIdentifier=ios-arm64
 ```
 
 Both targets need a physical device — the camera is the whole app, and the iOS simulator has none.

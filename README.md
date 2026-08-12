@@ -53,7 +53,7 @@ src/LensApp/
 
 ## Build and run
 
-Requires the .NET 9 SDK and the MAUI workload:
+Requires the .NET 10 SDK (LTS) and the MAUI workload:
 
 ```bash
 dotnet workload install maui
@@ -62,13 +62,13 @@ dotnet workload install maui
 Android (from any OS):
 
 ```bash
-dotnet build src/LensApp/LensApp.csproj -f net9.0-android -t:Run
+dotnet build src/LensApp/LensApp.csproj -f net10.0-android -t:Run
 ```
 
 iOS (macOS with Xcode only):
 
 ```bash
-dotnet build src/LensApp/LensApp.csproj -f net9.0-ios -t:Run -p:RuntimeIdentifier=ios-arm64
+dotnet build src/LensApp/LensApp.csproj -f net10.0-ios -t:Run -p:RuntimeIdentifier=ios-arm64
 ```
 
 Both targets need a **physical device** — neither simulator gives you a usable camera, and
