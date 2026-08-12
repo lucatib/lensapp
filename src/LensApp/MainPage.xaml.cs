@@ -114,7 +114,29 @@ public partial class MainPage : ContentPage
         if (_panelPositioned) return;
         _panelPositioned = true;
         PanelContainer.Opacity = 1;
+
+#if ANDROID
+        // The handle sits flush with the bottom edge, which is exactly where Android's
+        // gesture navigation reserves an edge-swipe-to-home zone - without this, dragging the
+        // handle gets hijacked by the OS and backgrounds the app instead of opening the panel.
+        ExcludeHandleFromSystemGestures();
+#endif
     }
+
+#if ANDROID
+    void ExcludeHandleFromSystemGestures()
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(29)) return;
+        if (PanelHandle.Handler?.PlatformView is not Android.Views.View view) return;
+        if (view.Width <= 0 || view.Height <= 0) return;
+
+        var location = new int[2];
+        view.GetLocationOnScreen(location);
+        var rect = new Android.Graphics.Rect(
+            location[0], location[1], location[0] + view.Width, location[1] + view.Height);
+        view.SystemGestureExclusionRects = [rect];
+    }
+#endif
 
     void OnPanelHandlePanUpdated(object? sender, PanUpdatedEventArgs e)
     {
