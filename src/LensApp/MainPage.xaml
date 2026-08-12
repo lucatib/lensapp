@@ -26,6 +26,7 @@
             <Grid BackgroundColor="Transparent">
                 <Grid.GestureRecognizers>
                     <PinchGestureRecognizer PinchUpdated="OnPinchUpdated" />
+                    <PanGestureRecognizer PanUpdated="OnZoomPanUpdated" />
                     <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="OnDoubleTapped" />
                 </Grid.GestureRecognizers>
 

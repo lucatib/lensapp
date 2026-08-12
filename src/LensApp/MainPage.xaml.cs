@@ -78,4 +78,24 @@ public partial class MainPage : ContentPage
 
     void OnDoubleTapped(object? sender, TappedEventArgs e) =>
         _vm.Zoom = _vm.Zoom > 1.01 ? 1.0 : Math.Min(2.0, _vm.MaxZoom);
+
+    double _zoomPanStartFraction;
+
+    void OnZoomPanUpdated(object? sender, PanUpdatedEventArgs e)
+    {
+        // The full 0..1 zoom range is covered by ~280 units of drag, regardless of screen
+        // height, so the gesture feels the same on every device.
+        const double DragUnitsForFullRange = 280;
+
+        switch (e.StatusType)
+        {
+            case GestureStatus.Started:
+                _zoomPanStartFraction = _vm.ZoomFraction;
+                break;
+            case GestureStatus.Running:
+                var delta = -e.TotalY / DragUnitsForFullRange;
+                _vm.ZoomFraction = Math.Clamp(_zoomPanStartFraction + delta, 0.0, 1.0);
+                break;
+        }
+    }
 }
