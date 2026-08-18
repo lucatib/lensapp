@@ -160,8 +160,10 @@ public partial class MainPage : ContentPage
     void SetPanelOpen(bool open)
     {
         _panelOpen = open;
-        ZoomBar.FadeTo(open ? 0 : 1, 150);
+        // Fire-and-forget, as before: the panel state is already committed above, the animations
+        // just catch up to it.
+        _ = ZoomBar.FadeToAsync(open ? 0 : 1, 150);
         ZoomBar.InputTransparent = open;
-        PanelContainer.TranslateTo(0, open ? 0 : _panelClosedOffset, 200, Easing.CubicOut);
+        _ = PanelContainer.TranslateToAsync(0, open ? 0 : _panelClosedOffset, 200, Easing.CubicOut);
     }
 }

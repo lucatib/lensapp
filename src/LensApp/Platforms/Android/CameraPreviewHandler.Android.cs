@@ -82,16 +82,36 @@ public partial class CameraPreviewHandler
     {
         provider.UnbindAll();
 
-        _preview = new Preview.Builder().Build();
-        _preview.SetSurfaceProvider(ContextCompat.GetMainExecutor(Context), PlatformView.SurfaceProvider);
+        // The CameraX bindings surface most of this as nullable, so each step is checked rather
+        // than assumed — a null here means the device denied the use case, not a bug.
+        var preview = new Preview.Builder().Build();
+        if (preview is null)
+        {
+            ReportError("Could not create the camera preview.");
+            return;
+        }
 
-        _camera = provider.BindToLifecycle(lifecycleOwner, CameraSelector.DefaultBackCamera, _preview);
+        preview.SetSurfaceProvider(ContextCompat.GetMainExecutor(Context), PlatformView.SurfaceProvider);
+        _preview = preview;
+
+        if (CameraSelector.DefaultBackCamera is not { } backCamera)
+        {
+            ReportError("This device has no back camera.");
+            return;
+        }
+
+        _camera = provider.BindToLifecycle(lifecycleOwner, backCamera, preview);
+        if (_camera is null)
+        {
+            ReportError("Could not bind the camera to the activity lifecycle.");
+            return;
+        }
 
         var maxZoom = 1.0;
-        if (_camera.CameraInfo.ZoomState.Value is IZoomState zoomState)
+        if (_camera.CameraInfo?.ZoomState?.Value is IZoomState zoomState)
             maxZoom = Math.Min(zoomState.MaxZoomRatio, 20.0);
 
-        ReportCapabilities(maxZoom, _camera.CameraInfo.HasFlashUnit);
+        ReportCapabilities(maxZoom, _camera.CameraInfo?.HasFlashUnit == true);
 
         // Re-apply whatever the view already had set while the camera was closed.
         UpdateZoom();
@@ -106,8 +126,8 @@ public partial class CameraPreviewHandler
 
         try
         {
-            if (_camera?.CameraInfo.HasFlashUnit == true)
-                _camera.CameraControl.EnableTorch(false);
+            if (_camera?.CameraInfo?.HasFlashUnit == true)
+                _camera.CameraControl?.EnableTorch(false);
         }
         catch { /* the camera may already be gone */ }
 
@@ -122,16 +142,16 @@ public partial class CameraPreviewHandler
     {
         if (_camera is null || VirtualView is null) return;
 
-        try { _camera.CameraControl.SetZoomRatio((float)VirtualView.Zoom); }
+        try { _camera.CameraControl?.SetZoomRatio((float)VirtualView.Zoom); }
         catch (Exception ex) { ReportError($"Zoom failed: {ex.Message}"); }
     }
 
     partial void UpdateTorch()
     {
         if (_camera is null || VirtualView is null) return;
-        if (!_camera.CameraInfo.HasFlashUnit) return;
+        if (_camera.CameraInfo?.HasFlashUnit != true) return;
 
-        try { _camera.CameraControl.EnableTorch(VirtualView.IsTorchOn); }
+        try { _camera.CameraControl?.EnableTorch(VirtualView.IsTorchOn); }
         catch (Exception ex) { ReportError($"Torch failed: {ex.Message}"); }
     }
 
