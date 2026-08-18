@@ -24,3 +24,8 @@ artifacts/
 ## OS
 .DS_Store
 Thumbs.db
+
+## Signing / secrets
+*.jks
+*.keystore
+*.p12

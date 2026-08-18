@@ -83,4 +83,38 @@
     <AndroidStripILAfterAOT>true</AndroidStripILAfterAOT>
   </PropertyGroup>
 
+
+  <!-- ============================ release signing ============================ -->
+  <!--
+    Play App Signing means this is the *upload* key - Google holds the app signing key itself.
+    The keystore lives outside the repo and all three secrets come from the environment, so
+    nothing signable is committable and no password lands in shell history:
+
+      setx LENSAPP_KEYSTORE      "%USERPROFILE%\keys\lensapp-upload.jks"
+      setx LENSAPP_KEYSTORE_PASS "..."
+      setx LENSAPP_KEY_PASS      "..."
+
+    versionCode is ApplicationVersion above: Play needs it unique and increasing per upload,
+    so bump it by hand for every release. ApplicationDisplayVersion is the human-facing one.
+  -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'
+                            And $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'
+                            And '$(LENSAPP_KEYSTORE)' != ''">
+    <AndroidKeyStore>true</AndroidKeyStore>
+    <AndroidSigningKeyStore>$(LENSAPP_KEYSTORE)</AndroidSigningKeyStore>
+    <AndroidSigningKeyAlias>lensapp-upload</AndroidSigningKeyAlias>
+    <AndroidSigningStorePass>$(LENSAPP_KEYSTORE_PASS)</AndroidSigningStorePass>
+    <AndroidSigningKeyPass>$(LENSAPP_KEY_PASS)</AndroidSigningKeyPass>
+  </PropertyGroup>
+
+  <!-- Fail loudly rather than quietly handing back a debug-signed package that Play will reject. -->
+  <Target Name="_LensAppRequireUploadKey"
+          BeforeTargets="_Sign"
+          Condition="'$(Configuration)' == 'Release'
+                     And $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'
+                     And '$(LENSAPP_KEYSTORE)' == ''">
+    <Error Code="LENS001"
+           Text="Release Android packages must be signed with the Play upload key, but LENSAPP_KEYSTORE is not set. Set LENSAPP_KEYSTORE (full path to lensapp-upload.jks), LENSAPP_KEYSTORE_PASS and LENSAPP_KEY_PASS in the environment and reopen the shell. Without them the package is signed with the Android debug key, which Play rejects." />
+  </Target>
+
 </Project>

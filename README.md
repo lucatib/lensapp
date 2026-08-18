@@ -81,6 +81,44 @@ the iOS simulator has no camera at all.
 
 The CameraX packages are pinned to `1.6.1.1` for reproducible restores.
 
+
+## Release builds
+
+Release enables R8 code and resource shrinking, a full trim and IL stripping after AOT — .NET
+Android leaves all of these off by default, and they roughly halve the dex that Play ships to
+every device regardless of ABI. Two consequences worth remembering: framework exception
+messages collapse to resource ids (`UseSystemResourceKeys`), and the same trim settings apply
+to the iOS target, which has not been tested.
+
+Signing uses a **Play upload key** — Google holds the app signing key itself under Play App
+Signing. Create the key once, outside the repo:
+
+```bash
+keytool -genkeypair -v -keystore "%USERPROFILE%\keys\lensapp-upload.jks" \
+  -alias lensapp-upload -keyalg RSA -keysize 4096 -validity 10000
+```
+
+Back it up somewhere durable; losing it means a Play support reset. Point the build at it
+through the environment, so no secret is ever committed or typed on a command line:
+
+```bash
+setx LENSAPP_KEYSTORE      "%USERPROFILE%\keys\lensapp-upload.jks"
+setx LENSAPP_KEYSTORE_PASS "..."
+setx LENSAPP_KEY_PASS      "..."
+```
+
+Then, after bumping `ApplicationVersion` in `LensApp.csproj` (Play needs a unique, increasing
+versionCode per upload):
+
+```bash
+dotnet publish src/LensApp/LensApp.csproj -f net10.0-android -c Release
+```
+
+Upload `bin/Release/net10.0-android/publish/com.lucatib.lensapp-Signed.aab`, and attach
+`bin/Release/net10.0-android/mapping.txt` to the same release so R8-shrunk crash reports
+deobfuscate. Building Release without the environment variables fails with `LENS001` rather
+than handing back a debug-signed bundle that Play would reject.
+
 ## Accuracy — read this before trusting a number
 
 A phone camera is not a spectrophotometer, and this app does not pretend otherwise:
