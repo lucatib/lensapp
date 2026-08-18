@@ -38,6 +38,9 @@ Both targets need a physical device — the camera is the whole app, and the iOS
 - Do not add an explicit `<MauiXaml Include="**\*.xaml" />` item — `SingleProject` MAUI apps
   already include `**/*.xaml` implicitly, and a duplicate glob causes `CS1508` duplicate resource
   ID errors on build.
+- `Microsoft.Maui.Controls` must be an `Include`, not an `Update` — since .NET 8 `<UseMaui>true</UseMaui>`
+  no longer adds the package reference implicitly, so `Update` alone leaves nothing to update and the
+  MAUI SDK emits `MA002`.
 - `builder.Logging.AddDebug()` in `MauiProgram.cs` needs the `Microsoft.Extensions.Logging.Debug`
   package explicitly referenced (Debug-only) — it is not pulled in transitively by
   `Microsoft.Maui.Controls`.
