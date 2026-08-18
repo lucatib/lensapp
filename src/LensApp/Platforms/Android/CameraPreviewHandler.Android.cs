@@ -1,4 +1,5 @@
 using Android.Graphics;
+using Android.Runtime;
 using AndroidX.Camera.Core;
 using AndroidX.Camera.Lifecycle;
 using AndroidX.Camera.View;
@@ -108,8 +109,21 @@ public partial class CameraPreviewHandler
         }
 
         var maxZoom = 1.0;
-        if (_camera.CameraInfo?.ZoomState?.Value is IZoomState zoomState)
-            maxZoom = Math.Min(zoomState.MaxZoomRatio, 20.0);
+        if (_camera.CameraInfo?.ZoomState?.Value is { } zoomValue)
+        {
+            // The camera2 adapter hands back androidx.camera.camera2.adapter.ZoomValue, and that
+            // binding does not declare IZoomState on the managed side - a plain `is IZoomState`
+            // silently fails there even though the Java object implements the interface, which
+            // left maxZoom at 1.0 and hid the zoom bar. JavaCast goes through the JNI type.
+            try
+            {
+                maxZoom = Math.Min(zoomValue.JavaCast<IZoomState>().MaxZoomRatio, 20.0);
+            }
+            catch (InvalidCastException)
+            {
+                // Genuinely not a ZoomState - leave the 1.0 fallback in place.
+            }
+        }
 
         ReportCapabilities(maxZoom, _camera.CameraInfo?.HasFlashUnit == true);
 
