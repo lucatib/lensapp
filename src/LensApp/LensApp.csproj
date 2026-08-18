@@ -56,4 +56,31 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.11" />
   </ItemGroup>
 
+
+  <!-- ============================ release size ============================ -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!-- MAUI ships a partial trim by default; full drops the framework surface this app never calls. -->
+    <TrimMode>full</TrimMode>
+
+    <!-- Feature switches for machinery LensApp does not use. UseSystemResourceKeys collapses
+         framework exception messages to resource ids, so release crash logs read as keys. -->
+    <EventSourceSupport>false</EventSourceSupport>
+    <MetricsSupport>false</MetricsSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <NullabilityInfoContextSupport>false</NullabilityInfoContextSupport>
+    <XmlResolverIsNetworkingEnabledByDefault>false</XmlResolverIsNetworkingEnabledByDefault>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' And $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+    <!-- .NET Android leaves both R8 shrinkers off by default, so the Java side (MAUI, AndroidX,
+         CameraX, Kotlin) shipped whole. dex goes to every device regardless of ABI, so on Play
+         it is the download, not the native libs Play already splits per device. -->
+    <AndroidLinkTool>r8</AndroidLinkTool>
+    <AndroidLinkResources>true</AndroidLinkResources>
+
+    <!-- Profiled AOT is already on in Release; without this the IL rides along next to it. -->
+    <AndroidStripILAfterAOT>true</AndroidStripILAfterAOT>
+  </PropertyGroup>
+
 </Project>
