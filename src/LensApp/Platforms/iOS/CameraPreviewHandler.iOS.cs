@@ -87,7 +87,7 @@ public partial class CameraPreviewHandler
                 return;
             }
 
-            _queue = new DispatchQueue("com.lucatib.lensapp.camera");
+            _queue = new DispatchQueue("com.qubitstudio.lensapp.camera");
             _frameDelegate = new FrameDelegate(ReportColor)
             {
                 Fraction = VirtualView.SampleSize,
