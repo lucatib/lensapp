@@ -1,5 +1,6 @@
 using AVFoundation;
 using CoreFoundation;
+using CoreImage;
 using CoreMedia;
 using CoreVideo;
 using Foundation;
@@ -224,32 +225,92 @@ public partial class CameraPreviewHandler
         finally { _device.UnlockForConfiguration(); }
     }
 
+    // ---- frame capture -----------------------------------------------------------------
+
+    /// <summary>
+    /// Lifts the next frame off the video data output. Snapshotting the view is not an option on
+    /// iOS: AVCaptureVideoPreviewLayer is composited outside the view hierarchy, so
+    /// DrawViewHierarchy would hand back an empty rectangle.
+    /// </summary>
+    public async Task<ImageSource?> CaptureFrameAsync()
+    {
+        var frameDelegate = _frameDelegate;
+        if (frameDelegate is null) return null;
+
+        try
+        {
+            var bytes = await frameDelegate.RequestFrameAsync(TimeSpan.FromSeconds(1));
+            if (bytes is null || bytes.Length == 0) return null;
+
+            return ImageSource.FromStream(() => new MemoryStream(bytes));
+        }
+        catch (Exception ex)
+        {
+            ReportError($"Could not freeze the frame: {ex.Message}");
+            return null;
+        }
+    }
+
     /// <summary>Reads the centre patch out of each (throttled) BGRA frame.</summary>
     sealed class FrameDelegate : AVCaptureVideoDataOutputSampleBufferDelegate
     {
         readonly Action<byte, byte, byte> _onColor;
         readonly PatchSampler _patch = new();
         long _lastTicks;
+        TaskCompletionSource<byte[]?>? _pendingCapture;
 
         public double Fraction { get; init; } = 0.07;
         public int Rate { get; init; } = 8;
 
         public FrameDelegate(Action<byte, byte, byte> onColor) => _onColor = onColor;
 
+        /// <summary>
+        /// Asks for the next frame as JPEG bytes. Returns null if none arrives within the
+        /// timeout - the session may be starting up, or stopped altogether.
+        /// </summary>
+        public async Task<byte[]?> RequestFrameAsync(TimeSpan timeout)
+        {
+            var request = new TaskCompletionSource<byte[]?>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            // A request still in flight is abandoned rather than left hanging.
+            Interlocked.Exchange(ref _pendingCapture, request)?.TrySetResult(null);
+
+            if (await Task.WhenAny(request.Task, Task.Delay(timeout)) != request.Task)
+            {
+                Interlocked.CompareExchange(ref _pendingCapture, null, request);
+                return null;
+            }
+
+            return await request.Task;
+        }
+
         public override void DidOutputSampleBuffer(
             AVCaptureOutput captureOutput, CMSampleBuffer sampleBuffer, AVCaptureConnection connection)
         {
+            // Held outside the try so the finally can always release a waiting caller.
+            TaskCompletionSource<byte[]?>? capture = null;
+
             try
             {
+                capture = Interlocked.Exchange(ref _pendingCapture, null);
+
+                // A capture is served on the very next frame, not on the next sampling tick.
                 var now = DateTime.UtcNow.Ticks;
                 var minInterval = TimeSpan.TicksPerSecond / Math.Max(1, Rate);
-                if (now - _lastTicks < minInterval) return;
-                _lastTicks = now;
+                var sampleDue = now - _lastTicks >= minInterval;
+
+                if (!sampleDue && capture is null) return;
 
                 using var imageBuffer = sampleBuffer.GetImageBuffer();
                 if (imageBuffer is not CVPixelBuffer pixelBuffer) return;
 
-                if (TrySample(pixelBuffer, out var r, out var g, out var b)) _onColor(r, g, b);
+                capture?.TrySetResult(EncodeJpeg(pixelBuffer));
+
+                if (sampleDue)
+                {
+                    _lastTicks = now;
+                    if (TrySample(pixelBuffer, out var r, out var g, out var b)) _onColor(r, g, b);
+                }
             }
             catch
             {
@@ -257,6 +318,9 @@ public partial class CameraPreviewHandler
             }
             finally
             {
+                // No-op when the capture already completed above; guarantees the awaiting
+                // CaptureFrameAsync never hangs on a frame that threw.
+                capture?.TrySetResult(null);
                 sampleBuffer.Dispose();
             }
         }
@@ -298,6 +362,18 @@ public partial class CameraPreviewHandler
             {
                 buffer.Unlock(CVPixelBufferLock.ReadOnly);
             }
+        }
+
+        static byte[]? EncodeJpeg(CVPixelBuffer buffer)
+        {
+            using var ciImage = new CIImage(buffer);
+            using var context = new CIContext();
+            using var cgImage = context.CreateCGImage(ciImage, ciImage.Extent);
+            if (cgImage is null) return null;
+
+            using var image = UIImage.FromImage(cgImage);
+            using var jpeg = image.AsJPEG(0.92f);
+            return jpeg?.ToArray();
         }
     }
 }

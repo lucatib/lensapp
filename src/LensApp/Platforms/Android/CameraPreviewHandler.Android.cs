@@ -238,4 +238,39 @@ public partial class CameraPreviewHandler
 
         return _patch.TryGetAverage(out r, out g, out b);
     }
+
+    // ---- frame capture -----------------------------------------------------------------
+
+    /// <summary>
+    /// Lifts the frame currently rendered by the PreviewView. This is the same surface the
+    /// colour sample is read from, so the still matches the last reading exactly.
+    /// Must be called on the UI thread - PreviewView.Bitmap requires it.
+    /// </summary>
+    public Task<ImageSource?> CaptureFrameAsync()
+    {
+        Bitmap? bitmap = null;
+        try
+        {
+            bitmap = PlatformView?.Bitmap;
+            if (bitmap is not { Width: > 0, Height: > 0 }) return Task.FromResult<ImageSource?>(null);
+
+            using var stream = new MemoryStream();
+            bitmap.Compress(Bitmap.CompressFormat.Jpeg!, 92, stream);
+            var bytes = stream.ToArray();
+
+            // ImageSource.FromStream is invoked lazily and possibly more than once, so it gets a
+            // fresh stream over the bytes each time rather than a captured one.
+            return Task.FromResult<ImageSource?>(ImageSource.FromStream(() => new MemoryStream(bytes)));
+        }
+        catch (Exception ex)
+        {
+            ReportError($"Could not freeze the frame: {ex.Message}");
+            return Task.FromResult<ImageSource?>(null);
+        }
+        finally
+        {
+            bitmap?.Recycle();
+            bitmap?.Dispose();
+        }
+    }
 }

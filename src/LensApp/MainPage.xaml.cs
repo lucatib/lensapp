@@ -17,11 +17,15 @@ public partial class MainPage : ContentPage
         // MaxZoom / IsTorchAvailable are discovered by the handler once the camera opens.
         Camera.PropertyChanged += OnCameraPropertyChanged;
         Camera.SizeChanged += OnCameraSizeChanged;
+        _vm.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        // Coming back to a held reading must not restart the camera behind the frozen still.
+        if (_vm.IsFrozen) return;
 
         if (await EnsureCameraPermissionAsync()) Camera.IsPreviewing = true;
     }
@@ -65,7 +69,57 @@ public partial class MainPage : ContentPage
         Reticle.HeightRequest = side;
     }
 
-    void OnColorSampled(object? sender, ColorSampledEventArgs e) => _vm.OnColorSampled(e.R, e.G, e.B);
+    void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.IsFrozen)) _ = ApplyFreezeAsync();
+    }
+
+    /// <summary>
+    /// Hold grabs the frame on screen, shows it as a still and releases the camera; Resume puts
+    /// the live preview back. The grab has to happen before the camera is stopped, and if it
+    /// comes back empty the preview is left running rather than dropping the user on a black
+    /// screen with no way to see what is being measured.
+    /// </summary>
+    async Task ApplyFreezeAsync()
+    {
+        if (_vm.IsFrozen)
+        {
+            var frame = await Camera.CaptureFrameAsync();
+            if (frame is null)
+            {
+                _vm.Status = "Could not freeze the frame - the reading is held, the preview is not.";
+                return;
+            }
+
+            FrozenFrame.Source = frame;
+            FrozenFrame.IsVisible = true;
+            Camera.IsPreviewing = false;
+        }
+        else
+        {
+            // Rebinding the camera takes a moment on Android. Keeping the still up until the
+            // first sample arrives avoids a black flash between release and first frame.
+            _awaitingFirstFrame = true;
+            Camera.IsPreviewing = true;
+        }
+    }
+
+    void ClearFrozenFrame()
+    {
+        _awaitingFirstFrame = false;
+        FrozenFrame.IsVisible = false;
+        FrozenFrame.Source = null;
+    }
+
+    bool _awaitingFirstFrame;
+
+    void OnColorSampled(object? sender, ColorSampledEventArgs e)
+    {
+        // First sample after Resume means frames are flowing again.
+        if (_awaitingFirstFrame) ClearFrozenFrame();
+
+        _vm.OnColorSampled(e.R, e.G, e.B);
+    }
 
     void OnCameraError(object? sender, CameraErrorEventArgs e) => _vm.OnCameraError(e.Message);
 

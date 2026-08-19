@@ -21,6 +21,18 @@ public sealed class CameraErrorEventArgs : EventArgs
 }
 
 /// <summary>
+/// Implemented by the platform handler so the page can lift a still of the current frame.
+/// Snapshotting the preview surface from the UI layer does not work on either platform - the
+/// frames are composited outside the view hierarchy - so the grab has to happen inside the
+/// handler, where the camera pipeline is.
+/// </summary>
+public interface ICameraFrameCapture
+{
+    /// <summary>The current frame as an image, or null if no frame is available yet.</summary>
+    Task<ImageSource?> CaptureFrameAsync();
+}
+
+/// <summary>
 /// Live camera preview with optical/digital zoom, torch control and continuous colour sampling
 /// of a small patch at the centre of the frame. Backed by CameraX on Android and AVFoundation
 /// on iOS - see <c>Handlers/CameraPreviewHandler.*</c>.
@@ -120,4 +132,13 @@ public sealed class CameraPreview : View
 
     internal void ReportError(string message) =>
         CameraError?.Invoke(this, new CameraErrorEventArgs(message));
+
+    /// <summary>
+    /// Grabs the frame currently on screen. Returns null when the handler is not attached or the
+    /// camera has not produced a frame yet.
+    /// </summary>
+    public Task<ImageSource?> CaptureFrameAsync() =>
+        Handler is ICameraFrameCapture capture
+            ? capture.CaptureFrameAsync()
+            : Task.FromResult<ImageSource?>(null);
 }

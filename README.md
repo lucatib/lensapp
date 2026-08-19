@@ -37,7 +37,7 @@ The torch can be switched on to light the sample.
 | Colour measurement | A centre patch (7 % of the short side) is averaged in linear light, with outlier pixels rejected |
 | RAL match | Patch → CIE Lab → **CIEDE2000** against the RAL Classic table; best match plus three runners-up with their ΔE |
 | Grey-card calibration | Point at something neutral, tap *Calibrate*; per-channel gains are stored in `Preferences` |
-| Hold | Freezes the readout so you can lift the phone away from the sample |
+| Hold | Freezes the frame on screen and releases the camera, so you can lift the phone away and still read what was measured |
 
 ## Layout
 
