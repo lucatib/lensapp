@@ -114,7 +114,7 @@ versionCode per upload):
 dotnet publish src/LensApp/LensApp.csproj -f net10.0-android -c Release
 ```
 
-Upload `bin/Release/net10.0-android/publish/com.qubitstudio.lensapp-Signed.aab`, and attach
+Upload `bin/Release/net10.0-android/publish/com.qbtapp.lensapp-Signed.aab`, and attach
 `bin/Release/net10.0-android/mapping.txt` to the same release so R8-shrunk crash reports
 deobfuscate. Building Release without the environment variables fails with `LENS001` rather
 than handing back a debug-signed bundle that Play would reject.

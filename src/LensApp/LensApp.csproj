@@ -11,7 +11,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <ApplicationTitle>LensApp</ApplicationTitle>
-    <ApplicationId>com.qubitstudio.lensapp</ApplicationId>
+    <ApplicationId>com.qbtapp.lensapp</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
 
