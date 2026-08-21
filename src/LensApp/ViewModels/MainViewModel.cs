@@ -32,8 +32,8 @@ public sealed class MainViewModel : ObservableObject
 
         IsCalibrated = _whiteBalance.IsCalibrated;
         Status = IsCalibrated
-            ? "Grey-card calibration in use."
-            : "Tip: point at something white and calibrate for a trustworthy reading.";
+            ? "White reference in use."
+            : "Set a white reference first - readings are guesswork without one.";
     }
 
     // ---- live measurement --------------------------------------------------------------
@@ -190,7 +190,7 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    public string CalibrationLabel => IsCalibrated ? "Calibrated" : "Uncalibrated";
+    public string CalibrationLabel => IsCalibrated ? "White ref set" : "No white ref";
 
     // ---- commands ------------------------------------------------------------------------
 
@@ -274,23 +274,28 @@ public sealed class MainViewModel : ObservableObject
         var g = ColorMath.FromLinear(_rawG);
         var b = ColorMath.FromLinear(_rawB);
 
-        if (_whiteBalance.Calibrate(r, g, b))
+        var result = _whiteBalance.Calibrate(r, g, b);
+
+        Status = result switch
         {
-            IsCalibrated = _whiteBalance.IsCalibrated;
-            Status = "Calibrated on the current reference.";
-            ForcePublish();
-        }
-        else
-        {
-            Status = "Calibration needs a well-lit neutral reference that is not blown out.";
-        }
+            CalibrationResult.Success => "White reference set. Readings are corrected for this light.",
+            CalibrationResult.TooDark => "Too dark to use as a reference - add light and try again.",
+            CalibrationResult.Clipped => "Blown out - move back from the light, or turn the torch off.",
+            CalibrationResult.NotNeutral => "That is too saturated to be a white reference. Point at a white or grey card, not at the sample.",
+            _ => "Nothing measured yet.",
+        };
+
+        if (result != CalibrationResult.Success) return;
+
+        IsCalibrated = _whiteBalance.IsCalibrated;
+        ForcePublish();
     }
 
     void ResetCalibration()
     {
         _whiteBalance.Reset();
         IsCalibrated = false;
-        Status = "Calibration cleared - showing raw sensor colour.";
+        Status = "White reference cleared - showing raw sensor colour.";
         ForcePublish();
     }
 

@@ -23,7 +23,7 @@ The torch can be switched on to light the sample.
 │      │ R 42  G 115  B 176    │
 │      │ L* 46.6 a* -6.0 b*-35 │
 │ [RAL 5019 ΔE 4.2] [RAL 5012] │   runners-up
-│ Calibrate │ Reset WB │ Copy  │
+│ Set white ref │ Clear │ Copy │
 └──────────────────────────────┘
 ```
 
@@ -36,7 +36,7 @@ The torch can be switched on to light the sample.
 | Torch | `CameraControl.EnableTorch` / `AVCaptureDevice.TorchMode`, auto-released when the page goes away |
 | Colour measurement | A centre patch (7 % of the short side) is averaged in linear light, with outlier pixels rejected |
 | RAL match | Patch → CIE Lab → **CIEDE2000** against the RAL Classic table; best match plus three runners-up with their ΔE |
-| Grey-card calibration | Point at something neutral, tap *Calibrate*; per-channel gains are stored in `Preferences` |
+| White reference | Point at a white or grey card under the sample's light, tap *Set white ref*; per-channel gains are stored in `Preferences`. A reading too saturated to be neutral is refused |
 | Hold | Freezes the frame on screen and releases the camera, so you can lift the phone away and still read what was measured |
 
 ## Layout
@@ -126,10 +126,16 @@ A phone camera is not a spectrophotometer, and this app does not pretend otherwi
 * **The RAL hex values in `RalPalette.cs` are the commonly published sRGB approximations**, not
   measured spectral data. They identify a shade; they do not certify it. Swapping in your own
   measured values is a one-file change.
-* **The camera ISP rewrites colour** — auto white balance, tone curve, saturation. The
-  *Calibrate* button is what makes a reading meaningful: fill the reticle with a neutral white
-  or grey reference under the same light as the sample, tap it, then measure. Recalibrate when
-  the lighting changes.
+* **The camera ISP rewrites colour** — auto white balance, tone curve, saturation. *Set white
+  ref* is what makes a reading meaningful: fill the reticle with a neutral white or grey card
+  under the same light as the sample, tap it, then measure. Set it again when the light changes.
+  Do **not** set it on the sample — that tells the app the sample is neutral grey.
+* **Neutral samples are the hard case, and the white reference does not rescue them.** It
+  removes the colour cast but keeps the measured brightness, so on a grey — aluminium, RAL 9006,
+  any of the 7xxx greys — hue carries no information and `L*` alone decides the match. `L*`
+  follows auto-exposure, which the app does not control: the same neutral grey walks through
+  RAL 9007, 9022, 9006, 7038 and 7047 across a couple of stops. Fixing that needs an exposure
+  lock plus a reference of known lightness; neither exists yet.
 * **Light the sample evenly.** The torch helps at close range but adds specular hotspots on
   glossy paint; hold the phone slightly off-axis. Metallic and pearlescent finishes shift with
   the viewing angle and will never resolve to one stable number.
