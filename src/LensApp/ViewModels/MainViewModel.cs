@@ -173,6 +173,22 @@ public sealed class MainViewModel : ObservableObject
 
     public string ZoomText => $"{Zoom:0.0}×";
 
+    /// <summary>
+    /// Short warning shown over the preview. The status line lives inside the RAL panel, which
+    /// starts closed, so anything the user needs to see right now goes here instead.
+    /// </summary>
+    string _notice = string.Empty;
+    public string Notice
+    {
+        get => _notice;
+        set
+        {
+            if (SetProperty(ref _notice, value)) OnPropertyChanged(nameof(HasNotice));
+        }
+    }
+
+    public bool HasNotice => !string.IsNullOrEmpty(Notice);
+
     string _status = string.Empty;
     public string Status
     {
@@ -324,5 +340,9 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    public void OnCameraError(string message) => Status = message;
+    public void OnCameraError(string message)
+    {
+        Status = message;
+        Notice = message;
+    }
 }

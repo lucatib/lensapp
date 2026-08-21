@@ -24,6 +24,10 @@ public partial class CameraPreviewHandler
     int _sampleGeneration;
     readonly PatchSampler _patch = new();
 
+    // The most recent preview frame, kept so Hold always has a still to show. Sampling and
+    // capture both run on the UI thread, so this needs no locking.
+    Bitmap? _lastFrame;
+
     protected override PreviewView CreatePlatformView() => new(Context);
 
     protected override void ConnectHandler(PreviewView platformView)
@@ -35,6 +39,7 @@ public partial class CameraPreviewHandler
     protected override void DisconnectHandler(PreviewView platformView)
     {
         StopCamera();
+        ReleaseLastFrame();
         base.DisconnectHandler(platformView);
     }
 
@@ -194,12 +199,23 @@ public partial class CameraPreviewHandler
     {
         if (!_sampling || generation != _sampleGeneration || VirtualView is null) return;
 
-        Bitmap? bitmap = null;
         try
         {
-            bitmap = PlatformView?.Bitmap;
-            if (bitmap is { Width: > 0, Height: > 0 } && ReadCenterPatch(bitmap, VirtualView.SampleSize, out var r, out var g, out var b))
-                ReportColor(r, g, b);
+            var bitmap = PlatformView?.Bitmap;
+            if (bitmap is { Width: > 0, Height: > 0 })
+            {
+                // Retain the newest frame and drop the one it replaces, so at most one preview
+                // bitmap is alive at a time - the same churn as before, one cycle later.
+                ReleaseLastFrame();
+                _lastFrame = bitmap;
+
+                if (ReadCenterPatch(bitmap, VirtualView.SampleSize, out var r, out var g, out var b))
+                    ReportColor(r, g, b);
+            }
+            else
+            {
+                bitmap?.Dispose();
+            }
         }
         catch (Exception ex)
         {
@@ -207,8 +223,6 @@ public partial class CameraPreviewHandler
         }
         finally
         {
-            bitmap?.Recycle();
-            bitmap?.Dispose();
             ScheduleSample();
         }
     }
@@ -248,15 +262,37 @@ public partial class CameraPreviewHandler
     /// </summary>
     public Task<ImageSource?> CaptureFrameAsync()
     {
-        Bitmap? bitmap = null;
         try
         {
-            bitmap = PlatformView?.Bitmap;
-            if (bitmap is not { Width: > 0, Height: > 0 }) return Task.FromResult<ImageSource?>(null);
+            // Prefer the frame the last reading came from: it is guaranteed to exist once
+            // sampling has started, and it is exactly what the reticle measured. Asking
+            // PreviewView for a fresh bitmap can come back null depending on when it is called.
+            var bitmap = _lastFrame;
+            var borrowed = false;
+
+            if (bitmap is null || bitmap.IsRecycled)
+            {
+                bitmap = PlatformView?.Bitmap;
+                borrowed = true;
+            }
+
+            if (bitmap is not { Width: > 0, Height: > 0 })
+            {
+                if (borrowed) bitmap?.Dispose();
+                return Task.FromResult<ImageSource?>(null);
+            }
 
             using var stream = new MemoryStream();
             bitmap.Compress(Bitmap.CompressFormat.Jpeg!, 92, stream);
             var bytes = stream.ToArray();
+
+            if (borrowed)
+            {
+                bitmap.Recycle();
+                bitmap.Dispose();
+            }
+
+            if (bytes.Length == 0) return Task.FromResult<ImageSource?>(null);
 
             // ImageSource.FromStream is invoked lazily and possibly more than once, so it gets a
             // fresh stream over the bytes each time rather than a captured one.
@@ -267,10 +303,14 @@ public partial class CameraPreviewHandler
             ReportError($"Could not freeze the frame: {ex.Message}");
             return Task.FromResult<ImageSource?>(null);
         }
-        finally
-        {
-            bitmap?.Recycle();
-            bitmap?.Dispose();
-        }
+    }
+
+    void ReleaseLastFrame()
+    {
+        if (_lastFrame is null) return;
+
+        if (!_lastFrame.IsRecycled) _lastFrame.Recycle();
+        _lastFrame.Dispose();
+        _lastFrame = null;
     }
 }

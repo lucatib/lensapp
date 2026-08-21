@@ -66,6 +66,16 @@
                     </Border>
                 </HorizontalStackLayout>
 
+                <!-- Warnings that must be seen now: the status line is inside the panel, and the
+                     panel starts closed. -->
+                <Border VerticalOptions="Start" HorizontalOptions="Center" Margin="12,64,12,0"
+                        BackgroundColor="{StaticResource Scrim}" Stroke="{StaticResource Warning}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12,6"
+                        IsVisible="{Binding HasNotice}" InputTransparent="True">
+                    <Label Text="{Binding Notice}" FontSize="12"
+                           TextColor="{StaticResource Warning}" />
+                </Border>
+
                 <!-- zoom: vertical slider, right edge -->
                 <Border x:Name="ZoomBar" HorizontalOptions="End" VerticalOptions="Center" Margin="0,0,10,0"
                         WidthRequest="48" HeightRequest="240"

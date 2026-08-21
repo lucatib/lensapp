@@ -75,24 +75,32 @@ public partial class MainPage : ContentPage
     }
 
     /// <summary>
-    /// Hold grabs the frame on screen, shows it as a still and releases the camera; Resume puts
-    /// the live preview back. The grab has to happen before the camera is stopped, and if it
-    /// comes back empty the preview is left running rather than dropping the user on a black
-    /// screen with no way to see what is being measured.
+    /// Hold shows the current frame as a still and releases the camera; Resume puts the live
+    /// preview back.
+    ///
+    /// The camera is stopped whether or not the still could be grabbed. Bailing out on a failed
+    /// grab left the preview running, which is the one outcome the button must never produce:
+    /// it says Hold and the image keeps moving, and the explanation lands in the status line
+    /// inside a panel that is closed by default.
     /// </summary>
     async Task ApplyFreezeAsync()
     {
         if (_vm.IsFrozen)
         {
+            // Grab before stopping - there is no frame to take afterwards.
             var frame = await Camera.CaptureFrameAsync();
-            if (frame is null)
+
+            if (frame is not null)
             {
-                _vm.Status = "Could not freeze the frame - the reading is held, the preview is not.";
-                return;
+                FrozenFrame.Source = frame;
+                FrozenFrame.IsVisible = true;
+                _vm.Notice = string.Empty;
+            }
+            else
+            {
+                _vm.Notice = "Held, but the still could not be grabbed.";
             }
 
-            FrozenFrame.Source = frame;
-            FrozenFrame.IsVisible = true;
             Camera.IsPreviewing = false;
         }
         else
@@ -100,6 +108,7 @@ public partial class MainPage : ContentPage
             // Rebinding the camera takes a moment on Android. Keeping the still up until the
             // first sample arrives avoids a black flash between release and first frame.
             _awaitingFirstFrame = true;
+            _vm.Notice = string.Empty;
             Camera.IsPreviewing = true;
         }
     }
