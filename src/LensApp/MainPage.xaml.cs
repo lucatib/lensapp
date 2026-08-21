@@ -27,7 +27,7 @@ public partial class MainPage : ContentPage
         // Coming back to a held reading must not restart the camera behind the frozen still.
         if (_vm.IsFrozen) return;
 
-        if (await EnsureCameraPermissionAsync()) Camera.IsPreviewing = true;
+        if (await EnsureCameraPermissionAsync()) Camera.SetPreviewing(true);
     }
 
     protected override void OnDisappearing()
@@ -35,7 +35,7 @@ public partial class MainPage : ContentPage
         base.OnDisappearing();
 
         // Releases the camera (and the torch) whenever the page is not on screen.
-        Camera.IsPreviewing = false;
+        Camera.SetPreviewing(false);
     }
 
     async Task<bool> EnsureCameraPermissionAsync()
@@ -101,7 +101,12 @@ public partial class MainPage : ContentPage
                 _vm.Notice = "Held, but the still could not be grabbed.";
             }
 
-            Camera.IsPreviewing = false;
+            Camera.SetPreviewing(false);
+
+            // Report what actually happened rather than what was asked for: a preview that keeps
+            // running under a button that says Hold is the whole complaint.
+            if (Camera.IsCameraRunning)
+                _vm.Notice = "Hold did not release the camera.";
         }
         else
         {
@@ -109,7 +114,7 @@ public partial class MainPage : ContentPage
             // first sample arrives avoids a black flash between release and first frame.
             _awaitingFirstFrame = true;
             _vm.Notice = string.Empty;
-            Camera.IsPreviewing = true;
+            Camera.SetPreviewing(true);
         }
     }
 

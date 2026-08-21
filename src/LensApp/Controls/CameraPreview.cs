@@ -21,15 +21,24 @@ public sealed class CameraErrorEventArgs : EventArgs
 }
 
 /// <summary>
-/// Implemented by the platform handler so the page can lift a still of the current frame.
-/// Snapshotting the preview surface from the UI layer does not work on either platform - the
-/// frames are composited outside the view hierarchy - so the grab has to happen inside the
-/// handler, where the camera pipeline is.
+/// Direct line to the platform handler, used where going through the property mapper is either
+/// impossible or not worth trusting.
+///
+/// Frame capture has to live here because neither platform composites camera frames inside the
+/// view hierarchy, so the grab must happen next to the camera pipeline. Start/stop is here for a
+/// blunter reason: the mapper is fire-and-forget, and a stop that silently does not happen leaves
+/// a live preview under a button that says Hold.
 /// </summary>
-public interface ICameraFrameCapture
+public interface ICameraPreviewController
 {
     /// <summary>The current frame as an image, or null if no frame is available yet.</summary>
     Task<ImageSource?> CaptureFrameAsync();
+
+    /// <summary>Opens or releases the camera immediately, without waiting on a property change.</summary>
+    void SetPreviewing(bool previewing);
+
+    /// <summary>Whether the camera is actually open right now, as the handler sees it.</summary>
+    bool IsCameraRunning { get; }
 }
 
 /// <summary>
@@ -138,7 +147,20 @@ public sealed class CameraPreview : View
     /// camera has not produced a frame yet.
     /// </summary>
     public Task<ImageSource?> CaptureFrameAsync() =>
-        Handler is ICameraFrameCapture capture
-            ? capture.CaptureFrameAsync()
+        Handler is ICameraPreviewController controller
+            ? controller.CaptureFrameAsync()
             : Task.FromResult<ImageSource?>(null);
+
+    /// <summary>
+    /// Opens or releases the camera. Sets <see cref="IsPreviewing"/> so bindings stay honest, then
+    /// tells the handler directly rather than relying on the property mapper to relay it.
+    /// </summary>
+    public void SetPreviewing(bool previewing)
+    {
+        IsPreviewing = previewing;
+        (Handler as ICameraPreviewController)?.SetPreviewing(previewing);
+    }
+
+    /// <summary>Whether the camera is open, according to the handler rather than to intent.</summary>
+    public bool IsCameraRunning => (Handler as ICameraPreviewController)?.IsCameraRunning ?? false;
 }

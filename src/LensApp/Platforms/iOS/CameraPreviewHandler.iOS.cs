@@ -53,6 +53,15 @@ public partial class CameraPreviewHandler
         else StopCamera();
     }
 
+    /// <summary>Called straight from the control, bypassing the property mapper.</summary>
+    public void SetPreviewing(bool previewing)
+    {
+        if (previewing) StartCamera();
+        else StopCamera();
+    }
+
+    public bool IsCameraRunning => _session is not null;
+
     void StartCamera()
     {
         if (_session is not null || VirtualView is null) return;

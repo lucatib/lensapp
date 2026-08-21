@@ -49,6 +49,15 @@ public partial class CameraPreviewHandler
         else StopCamera();
     }
 
+    /// <summary>Called straight from the control, bypassing the property mapper.</summary>
+    public void SetPreviewing(bool previewing)
+    {
+        if (previewing) StartCamera();
+        else StopCamera();
+    }
+
+    public bool IsCameraRunning => _camera is not null;
+
     void StartCamera()
     {
         if (_camera is not null || _binding) return;
@@ -142,6 +151,10 @@ public partial class CameraPreviewHandler
     {
         _sampling = false;
         _sampleGeneration++;
+
+        // A bind still in flight would otherwise re-open the camera moments after this stop,
+        // and would also block the next StartCamera because the flag never cleared.
+        _binding = false;
 
         try
         {

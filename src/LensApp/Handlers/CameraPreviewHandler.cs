@@ -9,7 +9,7 @@ using PlatformCameraView = LensApp.Handlers.CameraPreviewUIView;
 
 namespace LensApp.Handlers;
 
-public partial class CameraPreviewHandler : ViewHandler<CameraPreview, PlatformCameraView>, ICameraFrameCapture
+public partial class CameraPreviewHandler : ViewHandler<CameraPreview, PlatformCameraView>, ICameraPreviewController
 {
     public static readonly IPropertyMapper<CameraPreview, CameraPreviewHandler> CameraMapper =
         new PropertyMapper<CameraPreview, CameraPreviewHandler>(ViewMapper)
