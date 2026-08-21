@@ -135,7 +135,7 @@ public sealed class MainViewModel : ObservableObject
         get => _zoom;
         set
         {
-            var clamped = Math.Clamp(value, 1.0, Math.Max(1.0, MaxZoom));
+            var clamped = Math.Clamp(value, MinZoom, Math.Max(MinZoom, MaxZoom));
             if (!SetProperty(ref _zoom, clamped)) return;
 
             OnPropertyChanged(nameof(ZoomText));
@@ -144,16 +144,28 @@ public sealed class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Slider-friendly 0..1 view of the zoom. The mapping is geometric, so the lower half of
-    /// the travel covers the small factors where framing actually happens. Kept normalised
-    /// because a Slider refuses a Minimum that is not below its Maximum, and the real maximum
-    /// is only known once the camera has opened.
+    /// Slider-friendly 0..1 view of the zoom, spanning <see cref="MinZoom"/> to
+    /// <see cref="MaxZoom"/>. The mapping is geometric, so the lower half of the travel covers
+    /// the small factors where framing actually happens. Kept normalised because a Slider
+    /// refuses a Minimum that is not below its Maximum, and the real range is only known once
+    /// the camera has opened.
     /// </summary>
     public double ZoomFraction
     {
-        get => MaxZoom <= 1.0 ? 0.0 : Math.Clamp(Math.Log(Zoom) / Math.Log(MaxZoom), 0.0, 1.0);
-        set => Zoom = MaxZoom <= 1.0 ? 1.0 : Math.Pow(MaxZoom, Math.Clamp(value, 0.0, 1.0));
+        get
+        {
+            var span = ZoomSpan;
+            return span <= 0 ? 0.0 : Math.Clamp((Math.Log(Zoom) - Math.Log(MinZoom)) / span, 0.0, 1.0);
+        }
+        set
+        {
+            var span = ZoomSpan;
+            Zoom = span <= 0 ? MinZoom : MinZoom * Math.Exp(span * Math.Clamp(value, 0.0, 1.0));
+        }
     }
+
+    /// <summary>Width of the zoom range in log space, i.e. how far the slider travel spans.</summary>
+    double ZoomSpan => Math.Log(Math.Max(MinZoom, MaxZoom)) - Math.Log(MinZoom);
 
     double _maxZoom = 1.0;
     public double MaxZoom
@@ -169,7 +181,27 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    public bool CanZoom => MaxZoom > 1.01;
+    /// <summary>
+    /// Floor of the zoom range, normally 1.0. While a held still is on screen it is raised to
+    /// the zoom that still was captured at: the frame can only be scaled up from there, since
+    /// no amount of scaling puts back the field of view the camera had already cropped away.
+    /// </summary>
+    double _minZoom = 1.0;
+    public double MinZoom
+    {
+        get => _minZoom;
+        set
+        {
+            var floor = Math.Max(1.0, value);
+            if (!SetProperty(ref _minZoom, floor)) return;
+
+            OnPropertyChanged(nameof(CanZoom));
+            OnPropertyChanged(nameof(ZoomFraction));
+            if (Zoom < floor) Zoom = floor;
+        }
+    }
+
+    public bool CanZoom => MaxZoom > MinZoom * 1.01;
 
     public string ZoomText => $"{Zoom:0.0}×";
 

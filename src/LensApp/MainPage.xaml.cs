@@ -72,6 +72,7 @@ public partial class MainPage : ContentPage
     void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainViewModel.IsFrozen)) _ = ApplyFreezeAsync();
+        else if (e.PropertyName == nameof(MainViewModel.Zoom)) ApplyFrozenZoom();
     }
 
     /// <summary>
@@ -95,6 +96,12 @@ public partial class MainPage : ContentPage
                 FrozenFrame.Source = frame;
                 FrozenFrame.IsVisible = true;
                 _vm.Notice = string.Empty;
+
+                // The still froze the framing along with the colour, so the zoom range now
+                // starts where the capture did - see ApplyFrozenZoom.
+                _frozenZoom = _vm.Zoom;
+                _vm.MinZoom = _frozenZoom;
+                ApplyFrozenZoom();
             }
             else
             {
@@ -114,18 +121,42 @@ public partial class MainPage : ContentPage
             // first sample arrives avoids a black flash between release and first frame.
             _awaitingFirstFrame = true;
             _vm.Notice = string.Empty;
+            _vm.MinZoom = 1.0;
             Camera.SetPreviewing(true);
         }
+    }
+
+    /// <summary>
+    /// With the camera released, the only thing left for the zoom control to act on is the still,
+    /// so it scales the image instead. Scaling about the centre keeps the measured patch centred:
+    /// the zoom magnifies it rather than wandering off it. The reticle is scaled by the same
+    /// factor so it goes on marking the area the held reading actually came from.
+    ///
+    /// Never below 1: the still is already cropped to the zoom it was captured at, and shrinking
+    /// it would only pull its edges in from the screen.
+    /// </summary>
+    void ApplyFrozenZoom()
+    {
+        if (!FrozenFrame.IsVisible) return;
+
+        var scale = _frozenZoom > 0 ? Math.Max(1.0, _vm.Zoom / _frozenZoom) : 1.0;
+        FrozenFrame.Scale = scale;
+        Reticle.Scale = scale;
     }
 
     void ClearFrozenFrame()
     {
         _awaitingFirstFrame = false;
         FrozenFrame.IsVisible = false;
+        FrozenFrame.Scale = 1;
+        Reticle.Scale = 1;
         FrozenFrame.Source = null;
     }
 
     bool _awaitingFirstFrame;
+
+    /// <summary>Zoom the held still was captured at, i.e. the scale at which it reads 1:1.</summary>
+    double _frozenZoom = 1.0;
 
     void OnColorSampled(object? sender, ColorSampledEventArgs e)
     {
@@ -144,8 +175,13 @@ public partial class MainPage : ContentPage
             _vm.Zoom *= e.Scale;
     }
 
+    // Double tap toggles between the bottom of the range and 2x into it. Both ends are relative
+    // to MinZoom, which a held still raises off 1.0 - otherwise the gesture does nothing at all
+    // while a frame captured at 4x is on screen.
     void OnDoubleTapped(object? sender, TappedEventArgs e) =>
-        _vm.Zoom = _vm.Zoom > 1.01 ? 1.0 : Math.Min(2.0, _vm.MaxZoom);
+        _vm.Zoom = _vm.Zoom > _vm.MinZoom * 1.01
+            ? _vm.MinZoom
+            : Math.Min(_vm.MinZoom * 2.0, _vm.MaxZoom);
 
     double _zoomPanStartFraction;
 
