@@ -22,6 +22,41 @@ dotnet build src/LensApp/LensApp.csproj -f net10.0-ios -t:Run -p:RuntimeIdentifi
 
 Both targets need a physical device — the camera is the whole app, and the iOS simulator has none.
 
+## Where things stand
+
+Read this before touching the camera. It is the part that does not survive in the code.
+
+- **The build stamp is the first thing to check.** The RAL panel shows `v{ApplicationDisplayVersion}
+  ({ApplicationVersion})` bottom right. A fix that was never installed and a fix that does not work
+  look identical from a bug report, and that confusion has already cost several rounds. Bump
+  `ApplicationVersion` whenever you want to tell two builds apart.
+
+- **Hold has never been confirmed working on a device.** It should grab the current frame, show it
+  as a still and release the camera. Three attempts so far: freeze-frame, then unconditional stop,
+  then bypassing the property mapper with a direct handler call (`CameraPreview.SetPreviewing`).
+  None was ever exercised against a build that reached a phone. If Hold still leaves the preview
+  live, check `Camera.IsCameraRunning` - it reports what the handler sees, not what was asked for,
+  and the notice banner says so on screen.
+
+- **Do not trust the property mapper as evidence.** The camera starting proves nothing about it:
+  startup runs through `ConnectHandler`, which reads `IsPreviewing` directly. Anything that must
+  happen goes through `ICameraPreviewController`.
+
+- **iOS has never been compiled.** Not once. The AVFoundation handler, the CoreImage frame capture
+  and the trim settings applied to the iOS target are all unverified. Expect the first
+  `dotnet build -f net10.0-ios` to fail somewhere in there.
+
+- **Neutral samples are the real open problem.** The white reference removes the colour cast but
+  keeps the measured brightness, so on a grey - aluminium, RAL 9006, the 7xxx range - only `L*`
+  separates the candidates and `L*` follows auto-exposure. Measured: one neutral grey walks through
+  RAL 9007, 9022, 9006, 7038 and 7047 across a couple of stops. The fix is two pieces, in order:
+  lock AE and AWB during measurement (iOS: `ExposureMode`/`WhiteBalanceMode = Locked`; Android:
+  `Camera2Interop` to pass the AE/AWB lock flags to CameraX), then calibrate against a reference of
+  known lightness so the brightness scale is anchored too. Neither exists yet.
+
+- `claude/maui-camera-zoom-color-qbgj27` still exists on the remote. It holds nothing that is not in
+  `main`; the delete failed from the cloud sandbox and is one click on GitHub.
+
 ## Project notes
 
 - Portrait orientation and back camera only, on both platforms. The reticle-to-sample mapping
