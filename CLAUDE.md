@@ -84,3 +84,10 @@ Read this before touching the camera. It is the part that does not survive in th
   emits a pile of `NU1608` warnings. Do **not** also bump `Navigation.UI` to close the last two —
   it drags in a newer Material Components binding that breaks the generated Slider glue
   (`BaseOnChangeListenerImplementor`/`BaseOnSliderTouchListenerImplementor`).
+- Editing `Resources/AppIcon/appiconfg.svg` alone does **not** rebuild the launcher icon. The
+  resizetizer's up-to-date check keys off the `MauiIcon` *Include* file (`appicon.svg`), so a
+  change confined to the `ForegroundFile` leaves the old mipmaps in
+  `obj/<Config>/net10.0-android/resizetizer/` and ships them in the APK — the splash updates and
+  the icon does not, which is exactly what the symptom looks like on the device. Delete
+  `obj/*/net10.0-android/resizetizer/` and rebuild. Android's launcher also caches icons, so give
+  it a moment (or a launcher restart) after reinstalling before concluding the rebuild failed.
