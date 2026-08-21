@@ -208,6 +208,12 @@ public sealed class MainViewModel : ObservableObject
 
     public string CalibrationLabel => IsCalibrated ? "White ref set" : "No white ref";
 
+    /// <summary>
+    /// Which build is actually on the device. Debugging a camera by proxy is hopeless without
+    /// it: a fix that never got installed and a fix that does not work look identical.
+    /// </summary>
+    public string BuildLabel => $"v{AppInfo.Current.VersionString} ({AppInfo.Current.BuildString})";
+
     // ---- commands ------------------------------------------------------------------------
 
     public ICommand ToggleTorchCommand { get; }
