@@ -1,4 +1,5 @@
 using LensApp.Controls;
+using LensApp.Services;
 using LensApp.ViewModels;
 
 namespace LensApp;
@@ -93,7 +94,11 @@ public partial class MainPage : ContentPage
 
             if (frame is not null)
             {
-                FrozenFrame.Source = frame;
+                // Kept so Save can write out the held still: once the camera is released there is
+                // no other copy of it. The source gets a fresh stream per call, since
+                // ImageSource.FromStream is invoked lazily and possibly more than once.
+                _frozenJpeg = frame;
+                FrozenFrame.Source = ImageSource.FromStream(() => new MemoryStream(frame));
                 FrozenFrame.IsVisible = true;
                 _vm.Notice = string.Empty;
 
@@ -120,6 +125,7 @@ public partial class MainPage : ContentPage
             // Rebinding the camera takes a moment on Android. Keeping the still up until the
             // first sample arrives avoids a black flash between release and first frame.
             _awaitingFirstFrame = true;
+            _frozenJpeg = null;
             _vm.Notice = string.Empty;
             _vm.MinZoom = 1.0;
             Camera.SetPreviewing(true);
@@ -139,10 +145,13 @@ public partial class MainPage : ContentPage
     {
         if (!FrozenFrame.IsVisible) return;
 
-        var scale = _frozenZoom > 0 ? Math.Max(1.0, _vm.Zoom / _frozenZoom) : 1.0;
+        var scale = FrozenScale;
         FrozenFrame.Scale = scale;
         Reticle.Scale = scale;
     }
+
+    /// <summary>How far the held still is scaled up on screen, relative to how it was captured.</summary>
+    double FrozenScale => _frozenZoom > 0 ? Math.Max(1.0, _vm.Zoom / _frozenZoom) : 1.0;
 
     void ClearFrozenFrame()
     {
@@ -157,6 +166,79 @@ public partial class MainPage : ContentPage
 
     /// <summary>Zoom the held still was captured at, i.e. the scale at which it reads 1:1.</summary>
     double _frozenZoom = 1.0;
+
+    /// <summary>The held still as captured, or null while live.</summary>
+    byte[]? _frozenJpeg;
+
+    bool _saving;
+
+    /// <summary>
+    /// Saves what is on screen - the frame, the reticle and the reading - to the gallery.
+    ///
+    /// A system screenshot cannot stand in for this: the camera surface is composited outside the
+    /// view hierarchy on both platforms and comes out black. So the image is rebuilt from the
+    /// camera frame, cropped to the on-screen zoom when a still is held.
+    /// </summary>
+    async void OnSaveClicked(object? sender, EventArgs e)
+    {
+        if (_saving) return;
+
+        var reading = _vm.CurrentReading;
+        if (reading is null)
+        {
+            ShowBriefly("Nothing measured yet.");
+            return;
+        }
+
+        _saving = true;
+        SaveButton.IsEnabled = false;
+
+        try
+        {
+            // A held still is saved as held. A fresh frame would not match the frozen reading,
+            // and with the camera released there is no fresh frame to take anyway.
+            var held = _frozenJpeg;
+            var frame = held ?? await Camera.CaptureFrameAsync();
+            if (frame is null)
+            {
+                ShowBriefly("No frame to save yet.");
+                return;
+            }
+
+            var scale = held is not null ? FrozenScale : 1.0;
+            var sampleSize = Camera.SampleSize;
+            var takenAt = DateTime.Now;
+
+            var jpeg = await Task.Run(() => SnapshotRenderer.Render(frame, scale, sampleSize, reading, takenAt));
+            await PhotoLibrary.SaveJpegAsync(jpeg, $"LensApp_{takenAt:yyyyMMdd_HHmmss}.jpg");
+
+            _vm.Status = $"Saved to {PhotoLibrary.Location}.";
+            ShowBriefly(_vm.Status);
+        }
+        catch (Exception ex)
+        {
+            _vm.Status = $"Could not save: {ex.Message}";
+            ShowBriefly(_vm.Status);
+        }
+        finally
+        {
+            _saving = false;
+            SaveButton.IsEnabled = true;
+        }
+    }
+
+    /// <summary>
+    /// Puts a message in the banner over the preview and takes it down again after a few seconds,
+    /// unless something else has replaced it in the meantime.
+    /// </summary>
+    void ShowBriefly(string message)
+    {
+        _vm.Notice = message;
+        Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(3), () =>
+        {
+            if (_vm.Notice == message) _vm.Notice = string.Empty;
+        });
+    }
 
     void OnColorSampled(object? sender, ColorSampledEventArgs e)
     {

@@ -273,7 +273,7 @@ public partial class CameraPreviewHandler
     /// colour sample is read from, so the still matches the last reading exactly.
     /// Must be called on the UI thread - PreviewView.Bitmap requires it.
     /// </summary>
-    public Task<ImageSource?> CaptureFrameAsync()
+    public Task<byte[]?> CaptureFrameAsync()
     {
         try
         {
@@ -292,7 +292,7 @@ public partial class CameraPreviewHandler
             if (bitmap is not { Width: > 0, Height: > 0 })
             {
                 if (borrowed) bitmap?.Dispose();
-                return Task.FromResult<ImageSource?>(null);
+                return Task.FromResult<byte[]?>(null);
             }
 
             using var stream = new MemoryStream();
@@ -305,16 +305,12 @@ public partial class CameraPreviewHandler
                 bitmap.Dispose();
             }
 
-            if (bytes.Length == 0) return Task.FromResult<ImageSource?>(null);
-
-            // ImageSource.FromStream is invoked lazily and possibly more than once, so it gets a
-            // fresh stream over the bytes each time rather than a captured one.
-            return Task.FromResult<ImageSource?>(ImageSource.FromStream(() => new MemoryStream(bytes)));
+            return Task.FromResult<byte[]?>(bytes.Length == 0 ? null : bytes);
         }
         catch (Exception ex)
         {
-            ReportError($"Could not freeze the frame: {ex.Message}");
-            return Task.FromResult<ImageSource?>(null);
+            ReportError($"Could not grab the frame: {ex.Message}");
+            return Task.FromResult<byte[]?>(null);
         }
     }
 

@@ -42,9 +42,15 @@ Read this before touching the camera. It is the part that does not survive in th
   startup runs through `ConnectHandler`, which reads `IsPreviewing` directly. Anything that must
   happen goes through `ICameraPreviewController`.
 
-- **iOS has never been compiled.** Not once. The AVFoundation handler, the CoreImage frame capture
-  and the trim settings applied to the iOS target are all unverified. Expect the first
-  `dotnet build -f net10.0-ios` to fail somewhere in there.
+- **iOS has only been compiled as C#.** `dotnet build -f net10.0-ios` on Windows builds the managed
+  assembly (for `iossimulator-x64`) with no errors, but nothing has been linked natively, AOT'd for
+  `ios-arm64` or run on a device. The AVFoundation handler, the CoreImage frame capture, PhotoKit
+  saving and the trim settings applied to the iOS target are all unverified at runtime.
+
+- **Save has never run on a device either.** It re-renders the camera frame with the reticle and a
+  caption strip (`Services/SnapshotRenderer.cs`, Maui.Graphics) and writes it through MediaStore
+  (Android, `Pictures/LensApp`) or PhotoKit add-only (iOS). A system screenshot is no substitute:
+  the camera surface is composited outside the view hierarchy and comes out black.
 
 - **Neutral samples are the real open problem.** The white reference removes the colour cast but
   keeps the measured brightness, so on a grey - aluminium, RAL 9006, the 7xxx range - only `L*`

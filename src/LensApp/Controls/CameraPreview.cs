@@ -31,8 +31,8 @@ public sealed class CameraErrorEventArgs : EventArgs
 /// </summary>
 public interface ICameraPreviewController
 {
-    /// <summary>The current frame as an image, or null if no frame is available yet.</summary>
-    Task<ImageSource?> CaptureFrameAsync();
+    /// <summary>The current frame as JPEG bytes, or null if no frame is available yet.</summary>
+    Task<byte[]?> CaptureFrameAsync();
 
     /// <summary>Opens or releases the camera immediately, without waiting on a property change.</summary>
     void SetPreviewing(bool previewing);
@@ -143,13 +143,13 @@ public sealed class CameraPreview : View
         CameraError?.Invoke(this, new CameraErrorEventArgs(message));
 
     /// <summary>
-    /// Grabs the frame currently on screen. Returns null when the handler is not attached or the
-    /// camera has not produced a frame yet.
+    /// Grabs the frame currently on screen as JPEG bytes. Returns null when the handler is not
+    /// attached or the camera has not produced a frame yet.
     /// </summary>
-    public Task<ImageSource?> CaptureFrameAsync() =>
+    public Task<byte[]?> CaptureFrameAsync() =>
         Handler is ICameraPreviewController controller
             ? controller.CaptureFrameAsync()
-            : Task.FromResult<ImageSource?>(null);
+            : Task.FromResult<byte[]?>(null);
 
     /// <summary>
     /// Opens or releases the camera. Sets <see cref="IsPreviewing"/> so bindings stay honest, then

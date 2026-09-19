@@ -6,7 +6,7 @@ The torch can be switched on to light the sample.
 
 ```
 ┌──────────────────────────────┐
-│  Torch off  │ Hold │  2.4×   │   full-screen live preview
+│ Torch │ Hold │ Save │ 2.4× │   full-screen live preview
 │                              │
 │                             ║│   drag anywhere to zoom - pinch, double-tap
 │            ┌──┐             ║│   and the vertical slider on the right all
@@ -38,6 +38,7 @@ The torch can be switched on to light the sample.
 | RAL match | Patch → CIE Lab → **CIEDE2000** against the RAL Classic table; best match plus three runners-up with their ΔE |
 | White reference | Point at a white or grey card under the sample's light, tap *Set white ref*; per-channel gains are stored in `Preferences`. A reading too saturated to be neutral is refused |
 | Hold | Freezes the frame on screen and releases the camera, so you can lift the phone away and still read what was measured |
+| Save | Writes the frame to the gallery (`Pictures/LensApp` on Android, Photos on iOS) with the reticle and the reading burned in: measured vs. matched swatch, RAL code and name, ΔE, hex, Lab, time and white-ref state. Saves the held still, at its on-screen zoom, when Hold is on |
 
 ## Layout
 

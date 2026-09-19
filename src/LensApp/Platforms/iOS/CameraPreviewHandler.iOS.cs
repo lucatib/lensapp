@@ -241,7 +241,7 @@ public partial class CameraPreviewHandler
     /// iOS: AVCaptureVideoPreviewLayer is composited outside the view hierarchy, so
     /// DrawViewHierarchy would hand back an empty rectangle.
     /// </summary>
-    public async Task<ImageSource?> CaptureFrameAsync()
+    public async Task<byte[]?> CaptureFrameAsync()
     {
         var frameDelegate = _frameDelegate;
         if (frameDelegate is null) return null;
@@ -249,13 +249,11 @@ public partial class CameraPreviewHandler
         try
         {
             var bytes = await frameDelegate.RequestFrameAsync(TimeSpan.FromSeconds(1));
-            if (bytes is null || bytes.Length == 0) return null;
-
-            return ImageSource.FromStream(() => new MemoryStream(bytes));
+            return bytes is { Length: > 0 } ? bytes : null;
         }
         catch (Exception ex)
         {
-            ReportError($"Could not freeze the frame: {ex.Message}");
+            ReportError($"Could not grab the frame: {ex.Message}");
             return null;
         }
     }

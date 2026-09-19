@@ -59,6 +59,10 @@
                     <Button Style="{StaticResource OverlayButton}"
                             Text="{Binding FreezeLabel}"
                             Command="{Binding ToggleFreezeCommand}" />
+                    <Button x:Name="SaveButton"
+                            Style="{StaticResource OverlayButton}"
+                            Text="Save"
+                            Clicked="OnSaveClicked" />
                     <Border BackgroundColor="{StaticResource Scrim}" Stroke="Transparent"
                             StrokeShape="RoundRectangle 20" Padding="12,8"
                             VerticalOptions="Center">

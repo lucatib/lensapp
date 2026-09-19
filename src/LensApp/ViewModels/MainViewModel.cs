@@ -85,6 +85,10 @@ public sealed class MainViewModel : ObservableObject
 
     public bool HasMatch => BestMatch is not null;
 
+    /// <summary>The readout as it stands, for burning into a saved image; null before the first sample.</summary>
+    public SnapshotReading? CurrentReading =>
+        _hasSample ? new SnapshotReading(MeasuredColor, HexText, LabText, BestMatch, IsCalibrated) : null;
+
     /// <summary>Alternatives, i.e. the matches after the best one.</summary>
     public ObservableCollection<RalMatch> Alternatives { get; } = [];
 

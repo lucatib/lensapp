@@ -28,5 +28,7 @@
 	<string>MauiSplash</string>
 	<key>NSCameraUsageDescription</key>
 	<string>LensApp uses the camera to read the colour in front of the reticle and match it against the RAL Classic range.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>LensApp saves the frame you measured, with its RAL reading, to your photos.</string>
 </dict>
 </plist>
