@@ -6,7 +6,7 @@ The torch can be switched on to light the sample.
 
 ```
 ┌──────────────────────────────┐
-│ Torch │ Hold │ Save │ 2.4× │   full-screen live preview
+│ Torch │ Hold │ Save │  2.4×  │   full-screen live preview
 │                              │
 │                             ║│   drag anywhere to zoom - pinch, double-tap
 │            ┌──┐             ║│   and the vertical slider on the right all
@@ -148,5 +148,5 @@ A phone camera is not a spectrophotometer, and this app does not pretend otherwi
 * Portrait orientation only (both platforms are locked to it) — the reticle-to-sample mapping
   assumes it.
 * Back camera only.
-* No shot history or export beyond *Copy*, which puts the match and the measured hex on the
-  clipboard.
+* No shot history inside the app. *Save* puts an annotated image in the gallery and *Copy* puts
+  the match and the measured hex on the clipboard, but the app keeps no list of past readings.
