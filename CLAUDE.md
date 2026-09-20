@@ -56,6 +56,16 @@ Read this before touching the camera. It is the part that does not survive in th
   caption band was translucent in that build and the photo's own text read through it; 1.3 (5)
   makes it opaque. The iOS half of `PhotoLibrary` has still never executed.
 
+  The path is shown in full in two places - the banner and the panel's status line - and a tap on
+  either opens the file through `PhotoLibrary.OpenAsync` (ACTION_VIEW on the MediaStore Uri;
+  iOS can only raise the Photos app, since add-only access cannot point at an asset). Verified on
+  the device: both taps land in Google Photos on the right image.
+
+  **The test phone has all three animation scales at 0.0**, and MAUI's Android ticker honours
+  `ValueAnimator.AreAnimatorsEnabled()` by completing animations instantly. Any fade or transition
+  will therefore look like a snap on that device no matter what the code says - check
+  `adb shell settings get global animator_duration_scale` before believing an animation is broken.
+
   To check a saved file without the phone in hand:
   `adb shell content query --uri content://media/external/images/media --projection _display_name:relative_path --where "_display_name LIKE 'LensApp%'"`,
   then `adb pull` it. `adb` lives at `C:\Program Files (x86)\Android\android-sdk\platform-tools`,

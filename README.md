@@ -39,6 +39,7 @@ The torch can be switched on to light the sample.
 | White reference | Point at a white or grey card under the sample's light, tap *Set white ref*; per-channel gains are stored in `Preferences`. A reading too saturated to be neutral is refused |
 | Hold | Freezes the frame on screen and releases the camera, so you can lift the phone away and still read what was measured |
 | Save | Writes the frame to the gallery (`Pictures/LensApp` on Android, Photos on iOS) with the reticle and the reading burned in: measured vs. matched swatch, RAL code and name, ΔE, hex, Lab, time and white-ref state. Saves the held still, at its on-screen zoom, when Hold is on |
+| Finding what you saved | Both the banner over the preview and the status line in the panel give the file's full path, e.g. `/storage/emulated/0/Pictures/LensApp/LensApp_20260920_104537.jpg`, and a tap on either opens that image in the phone's photo viewer. The banner goes after three seconds; the status line stays |
 
 ## Layout
 

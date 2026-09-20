@@ -210,10 +210,21 @@ public partial class MainPage : ContentPage
             var takenAt = DateTime.Now;
 
             var jpeg = await Task.Run(() => SnapshotRenderer.Render(frame, scale, sampleSize, reading, takenAt));
-            await PhotoLibrary.SaveJpegAsync(jpeg, $"LensApp_{takenAt:yyyyMMdd_HHmmss}.jpg");
+            var saved = await PhotoLibrary.SaveJpegAsync(jpeg, $"LensApp_{takenAt:yyyyMMdd_HHmmss}.jpg");
 
-            _vm.Status = $"Saved to {PhotoLibrary.Location}.";
-            ShowBriefly(_vm.Status);
+            // The path, in full, in both places: the banner goes away, the status line does not.
+            // Both open the file on a tap, and the status line is the one still there a minute
+            // later.
+            _lastSaved = saved;
+            _vm.Status = saved.Handle.Length > 0
+                ? $"Saved to {saved.FullPath} - tap to open."
+                : $"Saved to {saved.FullPath}";
+            _lastSavedStatus = _vm.Status;
+            ShowBriefly(
+                saved.Handle.Length > 0
+                    ? $"Saved to\n{saved.FullPath}\n\nTap here to open it"
+                    : $"Saved to {saved.FullPath}",
+                opens: saved);
         }
         catch (Exception ex)
         {
@@ -231,13 +242,77 @@ public partial class MainPage : ContentPage
     /// Puts a message in the banner over the preview and takes it down again after a few seconds,
     /// unless something else has replaced it in the meantime.
     /// </summary>
-    void ShowBriefly(string message)
+    /// <param name="opens">
+    /// The image a tap on this banner should open, if any. Tied to the message rather than kept
+    /// as the last save, so that tapping a later warning cannot reopen an older file.
+    /// </param>
+    void ShowBriefly(string message, SavedPhoto? opens = null)
     {
         _vm.Notice = message;
-        Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(3), () =>
+        _noticeOpens = opens;
+
+        // Fade in from wherever the last one left off, so a banner replacing another does not
+        // blink.
+        NoticeBanner.Opacity = 0;
+        _ = NoticeBanner.FadeTo(1, 150);
+
+        Dispatcher.DispatchDelayed(TimeSpan.FromSeconds(3), () => _ = HideNoticeAsync(message));
+    }
+
+    /// <summary>
+    /// Fades the banner out and then clears it. Clearing it first would flip
+    /// <see cref="MainViewModel.HasNotice"/> and take the whole border off screen in one frame,
+    /// which is the snap this avoids.
+    /// </summary>
+    async Task HideNoticeAsync(string message)
+    {
+        if (_vm.Notice != message) return;
+
+        // False means another banner started its own fade over this one and owns the border now.
+        if (!await NoticeBanner.FadeTo(0, 400)) return;
+        if (_vm.Notice != message) return;
+
+        _vm.Notice = string.Empty;
+        _noticeOpens = null;
+        NoticeBanner.Opacity = 1;
+    }
+
+    SavedPhoto? _noticeOpens;
+
+    /// <summary>The last image saved this session, and the status line that announced it.</summary>
+    SavedPhoto? _lastSaved;
+    string? _lastSavedStatus;
+
+    void OnNoticeTapped(object? sender, TappedEventArgs e)
+    {
+        if (_noticeOpens is { } photo) _ = OpenSavedAsync(photo);
+    }
+
+    void OnStatusTapped(object? sender, TappedEventArgs e)
+    {
+        // Only while the line still says what was saved: Copy, Hold and the white reference all
+        // write here too, and a tap on one of those must not reopen an older file.
+        if (_lastSaved is { } photo && _vm.Status == _lastSavedStatus) _ = OpenSavedAsync(photo);
+    }
+
+    async Task OpenSavedAsync(SavedPhoto photo)
+    {
+        if (photo.Handle.Length == 0) return;
+
+        try
         {
-            if (_vm.Notice == message) _vm.Notice = string.Empty;
-        });
+            await PhotoLibrary.OpenAsync(photo);
+
+            // It has done its job; leaving it up means coming back from the viewer to a banner
+            // offering to open what the user has just finished looking at.
+            await HideNoticeAsync(_vm.Notice);
+        }
+        catch (Exception ex)
+        {
+            // Opening it is a convenience; the file is saved either way, and the path is the
+            // part that still works.
+            ShowBriefly($"Saved, but nothing here opens it: {ex.Message}");
+        }
     }
 
     void OnColorSampled(object? sender, ColorSampledEventArgs e)
