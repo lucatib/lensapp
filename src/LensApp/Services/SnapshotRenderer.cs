@@ -22,7 +22,11 @@ public static class SnapshotRenderer
 {
     const float JpegQuality = 0.92f;
 
-    static readonly Color Scrim = Color.FromRgba(0, 0, 0, 0.72);
+    // Opaque, unlike the on-screen scrim. A translucent band is fine over a live preview, where
+    // the eye tracks the moving image behind it, but in a still the frame's own detail freezes
+    // underneath the text and competes with it - printed labels are the worst case, and they are
+    // exactly what gets measured.
+    static readonly Color Band = Color.FromArgb("#0E1116");
     static readonly Color Secondary = Color.FromArgb("#9AA7B8");
     static readonly Color Accent = Color.FromArgb("#4FC3F7");
 
@@ -85,7 +89,7 @@ public static class SnapshotRenderer
         var bandHeight = swatch + 2 * pad;
         var top = height - bandHeight;
 
-        canvas.FillColor = Scrim;
+        canvas.FillColor = Band;
         canvas.FillRectangle(0, top, width, bandHeight);
 
         // Measured on the left, the matched RAL on the right: the gap between the halves is the

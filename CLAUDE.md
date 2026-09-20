@@ -47,10 +47,19 @@ Read this before touching the camera. It is the part that does not survive in th
   `ios-arm64` or run on a device. The AVFoundation handler, the CoreImage frame capture, PhotoKit
   saving and the trim settings applied to the iOS target are all unverified at runtime.
 
-- **Save has never run on a device either.** It re-renders the camera frame with the reticle and a
-  caption strip (`Services/SnapshotRenderer.cs`, Maui.Graphics) and writes it through MediaStore
-  (Android, `Pictures/LensApp`) or PhotoKit add-only (iOS). A system screenshot is no substitute:
-  the camera surface is composited outside the view hierarchy and comes out black.
+- **Save works on Android; on iOS it is still unrun.** It re-renders the camera frame with the
+  reticle and a caption strip (`Services/SnapshotRenderer.cs`, Maui.Graphics) and writes it through
+  MediaStore (Android, `Pictures/LensApp`) or PhotoKit add-only (iOS). A system screenshot is no
+  substitute: the camera surface is composited outside the view hierarchy and comes out black.
+  Verified 2026-09-20 on an S23 Ultra (API 35, build 1.3 (4)): two files landed in
+  `Pictures/LensApp`, both indexed in MediaStore, swatches pixel-exact against the readout. The
+  caption band was translucent in that build and the photo's own text read through it; 1.3 (5)
+  makes it opaque. The iOS half of `PhotoLibrary` has still never executed.
+
+  To check a saved file without the phone in hand:
+  `adb shell content query --uri content://media/external/images/media --projection _display_name:relative_path --where "_display_name LIKE 'LensApp%'"`,
+  then `adb pull` it. `adb` lives at `C:\Program Files (x86)\Android\android-sdk\platform-tools`,
+  and Git Bash mangles `/sdcard/...` unless `MSYS_NO_PATHCONV=1` is set.
 
 - **Neutral samples are the real open problem.** The white reference removes the colour cast but
   keeps the measured brightness, so on a grey - aluminium, RAL 9006, the 7xxx range - only `L*`
