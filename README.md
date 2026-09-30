@@ -83,6 +83,24 @@ the iOS simulator has no camera at all.
 
 The CameraX packages are pinned to `1.6.1.1` for reproducible restores.
 
+## Permissions and privacy
+
+The Android manifest asks for as little as the app needs:
+
+| Permission | Why |
+| --- | --- |
+| `CAMERA` | Live preview and colour sampling |
+| `WRITE_EXTERNAL_STORAGE` (`maxSdkVersion="28"`) | *Save* on Android 7–9 only; from Android 10 MediaStore needs no permission |
+
+There is **no `INTERNET` permission**, and none for reading photos or storage
+(`READ_MEDIA_IMAGES` / `READ_EXTERNAL_STORAGE` would draw a Play review and the app never opens
+existing photos). Nothing leaves the device: no analytics, no ads, no account. That is what the
+Play *Data safety* form and the privacy policy at `https://qbtapp.com/lensapp/privacy/` state, so
+if a permission or SDK is added, update both. After each release, check App bundle explorer →
+Details → Permissions to confirm that no library pulled `INTERNET` in.
+
+The source is at version 1.3 (versionCode 9); the last bundle uploaded to Play is 1.2
+(versionCode 3).
 
 ## Release builds
 
