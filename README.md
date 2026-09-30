@@ -99,8 +99,8 @@ Play *Data safety* form and the privacy policy at `https://qbtapp.com/lensapp/pr
 if a permission or SDK is added, update both. After each release, check App bundle explorer →
 Details → Permissions to confirm that no library pulled `INTERNET` in.
 
-The source is at version 1.3 (versionCode 9); the last bundle uploaded to Play is 1.2
-(versionCode 3).
+The source is at version 1.3 (versionCode 9); the last bundle uploaded to Play is the same, 1.3
+(versionCode 9), on the internal testing track.
 
 ## Release builds
 
